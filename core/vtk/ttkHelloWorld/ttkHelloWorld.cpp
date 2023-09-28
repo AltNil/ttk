@@ -11,6 +11,8 @@
 #include <ttkMacros.h>
 #include <ttkUtils.h>
 
+#include <Freudenthal3D.h>
+
 // A VTK macro that enables the instantiation of this class via ::New()
 // You do not have to modify this
 vtkStandardNewMacro(ttkHelloWorld);
@@ -168,27 +170,58 @@ int ttkHelloWorld::RequestData(vtkInformation *ttkNotUsed(request),
   outputArray->SetNumberOfComponents(1); // only one component per tuple
   outputArray->SetNumberOfTuples(inputArray->GetNumberOfTuples());
 
-  // Get ttk::triangulation of the input vtkDataSet (will create one if one does
-  // not exist already).
-  ttk::Triangulation *triangulation
-    = ttkAlgorithm::GetTriangulation(inputDataSet);
-  if(!triangulation)
-    return 0;
+  // original triangulation
+  {
+    // Get ttk::triangulation of the input vtkDataSet (will create one if one does
+    // not exist already).
+    ttk::Triangulation *triangulation
+      = ttkAlgorithm::GetTriangulation(inputDataSet);
+    if(!triangulation)
+      return 0;
 
-  // Precondition the triangulation (e.g., enable fetching of vertex neighbors)
-  this->preconditionTriangulation(triangulation); // implemented in base class
+    // Precondition the triangulation (e.g., enable fetching of vertex neighbors)
+    this->preconditionTriangulation(triangulation); // implemented in base class
 
-  // Templatize over the different input array data types and call the base code
-  int status = 0; // this integer checks if the base code returns an error
-  ttkVtkTemplateMacro(inputArray->GetDataType(), triangulation->getType(),
-                      (status = this->computeAverages<VTK_TT, TTK_TT>(
-                         (VTK_TT *)ttkUtils::GetVoidPointer(outputArray),
-                         (VTK_TT *)ttkUtils::GetVoidPointer(inputArray),
-                         (TTK_TT *)triangulation->getData())));
+    // Templatize over the different input array data types and call the base code
+    int status = 0; // this integer checks if the base code returns an error
+    ttkVtkTemplateMacro(inputArray->GetDataType(), triangulation->getType(),
+                        (status = this->computeAverages<VTK_TT, TTK_TT>(
+                           (VTK_TT *)ttkUtils::GetVoidPointer(outputArray),
+                           (VTK_TT *)ttkUtils::GetVoidPointer(inputArray),
+                           (TTK_TT *)triangulation->getData())));
 
-  // On error cancel filter execution
-  if(status != 1)
-    return 0;
+    // On error cancel filter execution
+    if(status != 1)
+      return 0;
+  }
+
+  // new triangulation
+  {
+    // Get ttk::triangulation of the input vtkDataSet (will create one if one does
+    // not exist already).
+    // int extent[3]{10,10,10};
+    // auto triangulation = new ttk::Freudenthal3D(extent);
+
+    auto triangulation = new ttk::Freudenthal3D({10,10,10});
+
+    this->preconditionTriangulation(triangulation);
+
+    std::cout<<"nVertices "<<triangulation->getNumberOfVertices()<<std::endl;
+
+    // Templatize over the different input array data types and call the base code
+    int status = 0; // this integer checks if the base code returns an error
+    ttkTypeMacroA(inputArray->GetDataType(),
+                        (status = this->computeAverages<T0, ttk::Freudenthal3D>(
+                           ttkUtils::GetPointer<T0>(outputArray),
+                           ttkUtils::GetPointer<T0>(inputArray),
+                           triangulation)));
+
+    // On error cancel filter execution
+    if(status != 1)
+      return 0;
+
+    // delete triangulation;
+  }
 
   // Get output vtkDataSet (which was already instantiated based on the
   // information provided by FillOutputPortInformation)

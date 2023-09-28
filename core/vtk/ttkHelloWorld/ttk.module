@@ -6,4 +6,5 @@ HEADERS
   ttkHelloWorld.h
 DEPENDS
   helloWorld
+  lutTriangulations
   ttkAlgorithm
