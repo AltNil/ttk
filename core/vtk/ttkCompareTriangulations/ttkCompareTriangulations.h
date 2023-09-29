@@ -74,21 +74,8 @@ class TTKCOMPARETRIANGULATIONS_EXPORT ttkCompareTriangulations
   ,
     protected ttk::CompareTriangulations // and we inherit from the base class
 {
-private:
-  /**
-   * TODO 5: Add all filter parameters only as private member variables and
-   *         initialize them here.
-   */
-  std::string OutputArrayName{"AveragedScalarField"};
 
 public:
-  /**
-   * TODO 6: Automatically generate getters and setters of filter
-   *         parameters via vtkMacros.
-   */
-  vtkSetMacro(OutputArrayName, const std::string &);
-  vtkGetMacro(OutputArrayName, std::string);
-
   /**
    * This static method and the macro below are VTK conventions on how to
    * instantiate VTK objects. You don't have to modify this.

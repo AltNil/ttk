@@ -52,7 +52,7 @@ int ttkCompareTriangulations::RequestData(vtkInformation *ttkNotUsed(request),
   this->preconditionTriangulation(original_triangulation); // implemented in base class
   ttkTypeMacroT(
     original_triangulation->getType(),
-    this->printTriangulation<T0>( original_triangulation->getData() )
+    this->printTriangulation<T0>( (T0*)original_triangulation->getData() )
   );
 
   int dim[3];
