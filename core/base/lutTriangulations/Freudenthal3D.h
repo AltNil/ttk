@@ -7,8 +7,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
   public:
 
-    Freudenthal3D(std::array<int,3> extent_){
-      this->extent = extent_;
+    Freudenthal3D(std::array<int,3> extent_) : extent(extent_){
     }
 
     ttk::SimplexId getNumberOfVertices() const final {
@@ -32,7 +31,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     };
 
   private:
-    std::array<int,3> extent;
+    const std::array<int,3> extent;
 };
 
 }

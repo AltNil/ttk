@@ -1,0 +1,10 @@
+NAME
+  ttkCompareTriangulations
+SOURCES
+  ttkCompareTriangulations.cpp
+HEADERS
+  ttkCompareTriangulations.h
+DEPENDS
+  compareTriangulations
+  lutTriangulations
+  ttkAlgorithm
