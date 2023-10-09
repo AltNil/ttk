@@ -10,18 +10,17 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
   public:
 
     Freudenthal3D(std::array<int,3> extent_) : extent(extent_){
+      this->setDebugMsgPrefix("Freudenthal3D");
       std::vector<std::vector<int>> deltas;
-      int c = 0;
+      //calculate index offsets for each case
       for(std::vector<std::array<int,3>> caseId : lutNeghborOffset){
         std::vector<int> shifts;
         for(std::array<int,3> coordDeltas: caseId){
-          std::array<long,3> longArray = {long(coordDeltas[0]),long(coordDeltas[1]),long(coordDeltas[2])};
-          int offset = getVertexId(longArray);
-          shifts.push_back(offset);
+          shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
         }
-        deltas.push_back(shifts);
+        lutIndexOffset.push_back(shifts);
       }
-      lutIndexOffset = deltas;
+      //lutIndexOffset = deltas;
     }
 
     ttk::SimplexId getNumberOfVertices() const final {
@@ -30,8 +29,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
     ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
      const final {
-      auto caseID = getCaseID(vertexId);
-      return lutNumNeighbour3d[caseID];
+      return lutNumNeighbour3d[getCaseID(vertexId)];
       // return 0;
     };
 
@@ -40,23 +38,8 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       const int &localNeighborId,
       SimplexId &neighborId
     ) const final {
-      auto vid = getCaseID(vertexId);
-
-
-      /*auto localNeighbourhood = lutNeghborOffset[vid];
-      auto pointCoordinates = getCoordinates(vertexId);
-      auto offsets = localNeighbourhood[localNeighborId];
-      std::array<long,3> newCoords;
-      for (int i = 0; i < 3; i++){
-        newCoords[i]=pointCoordinates[i]+long(offsets[i]);
-      }
-      auto newNeighborId = getVertexId(newCoords);*/
-      //neighborId = SimplexId(newNeighborId);
-      
-      auto caseVec = lutIndexOffset[vid];
-      neighborId = SimplexId(vertexId+caseVec[localNeighborId]);
-      
-      //neighborId = SimplexId(vertexId);
+      // vertexid + offset of the local neighbor dependant of the case the vertex is in
+      neighborId = SimplexId(vertexId+lutIndexOffset[getCaseID(vertexId)][localNeighborId]);
       return 1;
     };
 
@@ -65,38 +48,49 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     };
 
     int getCaseID(const ttk::SimplexId& vertexId) const{
-      
-      std::array<long,3> coords;
-      coords = getCoordinates(vertexId);
-      
-      // case Clasification
+
+      // Calculate the coordinates of the given vertexId
+      auto xyDim = extent[0]*extent[1];
+      int z = vertexId/xyDim;
+      int xy = (vertexId-z*xyDim);
+      int y = xy/extent[0];
+      int x = xy-y*extent[0];
+      //std::array<int,3> coords = {xy-y*extent[0],y,z};
+
+      // case Clasification by coordinates
       int caseID = 0;
-      for (int i = 0; i < 3; i++){
-        if (coords[i] ==0){
-          caseID += pow(3,i); // 1*i^3
-        } else if (coords[i]==extent[i]-1){
-          caseID += 2*pow(3,i); // 2*i^3
-        }
+      
+      caseID += int(!bool(x)); // +1 if x == 0
+      caseID += int(!bool(x-(extent[0]-1)))*2; // +2 if x == extent[0]-1
+      caseID += int(!bool(y))*3; // +3 if y == 0
+      caseID += int(!bool(y-(extent[1]-1)))*6; // +6 if y == extent[1]-1
+      caseID += int(!bool(z))*9; // +9 if z == 0
+      caseID += int(!bool(z-(extent[2]-1)))*18; // +18 if z == extent[2]-1
+
+      /*
+      if (x ==0){
+        caseID += 1; // 1*3^0
+      } else if (x==extent[0]-1){
+        caseID += 2; // 2*3^0
       }
+      if (y ==0){
+        caseID += 3; // 1*3^1
+      } else if (y==extent[1]-1){
+        caseID += 6; // 2*3^1
+      }
+      if (z ==0){
+        caseID += 9; // 1*3^2
+      } else if (z==extent[2]-1){
+        caseID += 18; // 2*3^2
+      }*/
       return caseID;
     };
 
-    std::array<long,3> getCoordinates(const ttk::SimplexId& vertexId) const{
-      auto xyDim = extent[0]*extent[1];
-      
-      long z = vertexId/xyDim;
-      long xy = (vertexId-z*xyDim);
-      long y = xy/extent[0];
-      long x = xy-y*extent[0];
-      std::array<long,3> result = {x,y,z};
-      return result;
-
-    };
-
-    int getVertexId(const std::array<long,3> coordinates)  const{
+    /*
+    int getVertexId(const std::array<int,3>& coordinates)  const{
       auto result =  coordinates[0]+coordinates[1]*extent[0]+(extent[0]*extent[1]*coordinates[2]);
       return result;
-    };
+    };*/
 
   private:
 
