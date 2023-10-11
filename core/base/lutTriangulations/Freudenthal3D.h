@@ -10,9 +10,9 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
   public:
 
     Freudenthal3D(std::array<int,3> extent_) : extent(extent_){
-      this->setDebugMsgPrefix("Freudenthal3D");
+
+      // precalculate the implicite index offsets for neighbors
       std::vector<std::vector<int>> deltas;
-      //calculate index offsets for each case
       for(std::vector<std::array<int,3>> caseId : lutNeghborOffset){
         std::vector<int> shifts;
         for(std::array<int,3> coordDeltas: caseId){
@@ -20,7 +20,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         }
         lutIndexOffset.push_back(shifts);
       }
-      //lutIndexOffset = deltas;
     }
 
     ttk::SimplexId getNumberOfVertices() const final {
@@ -29,8 +28,8 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
     ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
      const final {
+      // return the neigbor by the caseID of the given vertex
       return lutNumNeighbour3d[getCaseID(vertexId)];
-      // return 0;
     };
 
     int getVertexNeighbor(
@@ -48,41 +47,28 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     };
 
     int getCaseID(const ttk::SimplexId& vertexId) const{
+      int ex = extent[0];
+      int ey = extent[1];
+      int ez = extent[2];
 
       // Calculate the coordinates of the given vertexId
-      auto xyDim = extent[0]*extent[1];
+      auto xyDim = ex*ey;
       int z = vertexId/xyDim;
       int xy = (vertexId-z*xyDim);
-      int y = xy/extent[0];
-      int x = xy-y*extent[0];
+      int y = xy/ex;
+      int x = xy-y*ex;
       //std::array<int,3> coords = {xy-y*extent[0],y,z};
 
       // case Clasification by coordinates
       int caseID = 0;
       
-      caseID += int(!bool(x)); // +1 if x == 0
-      caseID += int(!bool(x-(extent[0]-1)))*2; // +2 if x == extent[0]-1
-      caseID += int(!bool(y))*3; // +3 if y == 0
-      caseID += int(!bool(y-(extent[1]-1)))*6; // +6 if y == extent[1]-1
-      caseID += int(!bool(z))*9; // +9 if z == 0
-      caseID += int(!bool(z-(extent[2]-1)))*18; // +18 if z == extent[2]-1
-
-      /*
-      if (x ==0){
-        caseID += 1; // 1*3^0
-      } else if (x==extent[0]-1){
-        caseID += 2; // 2*3^0
-      }
-      if (y ==0){
-        caseID += 3; // 1*3^1
-      } else if (y==extent[1]-1){
-        caseID += 6; // 2*3^1
-      }
-      if (z ==0){
-        caseID += 9; // 1*3^2
-      } else if (z==extent[2]-1){
-        caseID += 18; // 2*3^2
-      }*/
+      caseID += (!bool(x)); // +1 if x == 0
+      caseID += (!bool(x-(ex-1)))*2; // +2 if x == extent[0]-1
+      caseID += (!bool(y))*3; // +3 if y == 0
+      caseID += (!bool(y-(ey-1)))*6; // +6 if y == extent[1]-1
+      caseID += (!bool(z))*9; // +9 if z == 0
+      caseID += (!bool(z-(ez-1)))*18; // +18 if z == extent[2]-1
+      if(caseID>=27) return 26;
       return caseID;
     };
 
