@@ -26,13 +26,13 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       return this->extent[0]*this->extent[1]*this->extent[2];
     };
 
-    ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
+    inline ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
      const final {
       // return the neigbor by the caseID of the given vertex
       return lutNumNeighbour3d[getCaseID(vertexId)];
     };
 
-    int getVertexNeighbor(
+    inline int getVertexNeighbor(
       const SimplexId &vertexId,
       const int &localNeighborId,
       SimplexId &neighborId
@@ -46,7 +46,9 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       return 1;
     };
 
-    int getCaseID(const ttk::SimplexId& vertexId) const{
+
+  private:
+    inline int getCaseID(const ttk::SimplexId& vertexId) const{
       int ex = extent[0];
       int ey = extent[1];
       int ez = extent[2];
@@ -77,8 +79,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       auto result =  coordinates[0]+coordinates[1]*extent[0]+(extent[0]*extent[1]*coordinates[2]);
       return result;
     };*/
-
-  private:
 
 
     const std::array<int,3> extent;
