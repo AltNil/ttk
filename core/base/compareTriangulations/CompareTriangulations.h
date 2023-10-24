@@ -20,6 +20,7 @@
 // ttk common includes
 #include <Debug.h>
 #include <Triangulation.h>
+#include <valgrind/callgrind.h>
 
 namespace ttk {
 
@@ -42,34 +43,88 @@ namespace ttk {
     template <class triangulationType = ttk::AbstractTriangulation>
     int printTriangulation(const triangulationType *triangulation) const {
       // start global timer
+      CALLGRIND_START_INSTRUMENTATION;
+      CALLGRIND_TOGGLE_COLLECT;
+
+      // Set which method sets should be compared
+      bool testVertexNeigbors = true;
+      bool testVertexEdges = true;
+
+
+
+
       ttk::Timer globalTimer;
 
+      /*
+       * Fest Vertex Neighbor
+       */
       auto nVertices = triangulation->getNumberOfVertices();
-      std::vector<ttk::SimplexId> nNeighbors(nVertices);
-      std::vector<std::vector<ttk::SimplexId>> neighbors(nVertices);
-      for(ttk::SimplexId v=0; v<nVertices; v++){
-        nNeighbors[v] = triangulation->getVertexNeighborNumber(v);
-        neighbors[v].resize(nNeighbors[v]);
-        for(ttk::SimplexId n=0; n<nNeighbors[v]; n++)
-          triangulation->getVertexNeighbor(v,n,neighbors[v][n]);
+      if(testVertexNeigbors){
+        //fetch data
+        std::vector<ttk::SimplexId> nNeighbors(nVertices);
+        std::vector<std::vector<ttk::SimplexId>> neighbors(nVertices);
+        for(ttk::SimplexId v=0; v<nVertices; v++){
+          nNeighbors[v] = triangulation->getVertexNeighborNumber(v);
+          neighbors[v].resize(nNeighbors[v]);
+          for(ttk::SimplexId n=0; n<nNeighbors[v]; n++)
+            triangulation->getVertexNeighbor(v,n,neighbors[v][n]);
+        }
+
+        //print data
+        this->printMsg(ttk::debug::Separator::L1);
+        this->printMsg("nVertices: " + std::to_string(nVertices));
+        std::stringstream nNeighborsAsString;
+        std::copy(nNeighbors.begin(), nNeighbors.end(), std::ostream_iterator<ttk::SimplexId>(nNeighborsAsString, ","));
+        this->printMsg("nNeighbors: [" + nNeighborsAsString.str() + "]");
+        for(ttk::SimplexId v=0; v<nVertices; v++){
+          std::stringstream neighborsAsString;
+          std::copy(neighbors[v].begin(), neighbors[v].end(), std::ostream_iterator<ttk::SimplexId>(neighborsAsString, ","));
+          this->printMsg("neighbors["+std::to_string(v)+"]: [" + neighborsAsString.str() + "]");
+        }
+        //todo timing
       }
 
-      this->printMsg(ttk::debug::Separator::L1);
-      this->printMsg("nVertices: " + std::to_string(nVertices));
-      std::stringstream nNeighborsAsString;
-      std::copy(nNeighbors.begin(), nNeighbors.end(), std::ostream_iterator<ttk::SimplexId>(nNeighborsAsString, ","));
-      this->printMsg("nNeighbors: [" + nNeighborsAsString.str() + "]");
-      for(ttk::SimplexId v=0; v<nVertices; v++){
-        std::stringstream neighborsAsString;
-        std::copy(neighbors[v].begin(), neighbors[v].end(), std::ostream_iterator<ttk::SimplexId>(neighborsAsString, ","));
-        this->printMsg("neighbors["+std::to_string(v)+"]: [" + neighborsAsString.str() + "]");
+
+      /*
+       * Test the edges of vertices
+       */
+      if(testVertexEdges){
+        //fetch datatiming
+        std::vector<ttk::SimplexId> nEdges(nVertices);
+        std::vector<std::vector<ttk::SimplexId>> edges(nVertices);
+        for(ttk::SimplexId v=0;v<nVertices;v++){
+          nEdges[v] = triangulation->getVertexEdgeNumber(v);
+          edges[v].resize(nEdges[v]);
+          for(ttk::SimplexId n=0; n<nEdges[v]; n++){
+            triangulation->getVertexEdge(v,n,edges[v][n]);
+          }
+        }
+
+        //print data
+        std::stringstream nEdgesAsString;
+        std::copy(nEdges.begin(), nEdges.end(), std::ostream_iterator<ttk::SimplexId>(nEdgesAsString, ","));
+        this->printMsg("nEdges: [" + nEdgesAsString.str() + "]");
+        for(ttk::SimplexId v=0; v<nVertices; v++){
+          std::stringstream edgesAsString;
+          std::copy(edges[v].begin(), edges[v].end(), std::ostream_iterator<ttk::SimplexId>(edgesAsString, ","));
+          this->printMsg("edges["+std::to_string(v)+"]: [" + edgesAsString.str() + "]");
+        }
+        //todo timing
       }
+      //this->printMsg(
+      //  "Complete", 1, globalTimer.getElapsedTime() // global progress, time
+      //);
 
       this->printMsg(ttk::debug::Separator::L1);
-      this->printMsg(
-        "Complete", 1, globalTimer.getElapsedTime() // global progress, time
-      );
+      auto name = std::string(typeid(triangulation).name());
+      std::string cutName = name.substr(9,name.length()-10);
+      std::string msg = "Completed " + cutName;
+      this->printMsg(msg,1,globalTimer.getElapsedTime());
       this->printMsg(ttk::debug::Separator::L1);
+
+
+      CALLGRIND_TOGGLE_COLLECT;
+      CALLGRIND_STOP_INSTRUMENTATION;
 
       return 1; // return success
     }

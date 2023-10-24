@@ -60,6 +60,20 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     };
 
 
+    ttk::SimplexId getVertexEdgeNumber(const SimplexId& vertexId) const {
+      return lutNumNeighbour3d[getCaseID(vertexId)];
+    };
+
+    int getVertexEdge ( 	const SimplexId &  	vertexId,
+      const int &  	localEdgeId,
+      SimplexId &  	edgeId 
+    ) 		const {
+      auto offset = lutEdgeOffset[getCaseID(vertexId)][localEdgeId];
+      edgeId = SimplexId(vertexId+offset);
+
+      return 1;
+    };
+
   private:
     /**
      * Transpose the ipmlicite index of an vertex into a case identifyer which denotes
@@ -131,5 +145,34 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{0, -1, -1}, {0, 0, -1}, {0, -1, 0}, {-1, 0, 0}}
     };
     std::vector<std::vector<int>> lutIndexOffset;
+    const std::vector<std::vector<int>> lutEdgeOffset = {
+      {54, 68, 27, 58, 12, 46, -4, 36, 73, -5, 47, 15, 83, 63},
+      {54, 68, 27, 58, 12, 46, -4, 15, 63, 73},
+      {-5, 47, 15, 36, 73, 83, 63, 27, 54, 12},
+      {-5, 47, 15, 36, 73, 83, 63, -4, 58, 27},
+      {-4, 15, 73, 63, 27, 58},
+      {-5, 47, 15, 36, 73, 83, 63, 27},
+      {54, 68, 27, 58, 12, 46, -4, -5, 36, 73},
+      {54, 68, 27, 58, 12, 46, -4, 73},
+      {12, -5, 36, 73, 54, 27},
+      {-5, 47, 15, 36, 73, 83, 63, 12, 46, -4},
+      {12, 46, -4, 73, 15, 63},
+      {-5, 47, 15, 36, 73, 83, 63, 12},
+      {-5, 47, 15, 36, 73, 83, 63, -4},
+      {-4, 15, 73, 63},
+      {-5, 47, 15, 36, 73, 83, 63},
+      {12, -5, 36, 73, 46, -4},
+      {12, 46, -4, 73},
+      {12, -5, 36, 73},
+      {54, 68, 27, 58, 12, 46, -4, -5, 47, 15},
+      {54, 68, 27, 58, 12, 46, -4, 15},
+      {27, -5, 47, 15, 54, 12},
+      {27, -5, 47, 15, 58, -4},
+      {27, 58, -4, 15},
+      {27, -5, 47, 15},
+      {54, 68, 27, 58, 12, 46, -4, -5},
+      {54, 68, 27, 58, 12, 46, -4},
+      {54, 27, 12, -5}
+    };
   };
 }
