@@ -26,12 +26,25 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       return this->extent[0]*this->extent[1]*this->extent[2];
     };
 
-    inline ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
+
+    /**
+     * Returns the number of neighbors for a specified vertex
+     * \param vertexId The Id of the vertex for which the number of neighbors should be searched
+     * \return Number vor neigbors the given vertex has
+    */
+    ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
      const final {
       // return the neigbor by the caseID of the given vertex
       return lutNumNeighbour3d[getCaseID(vertexId)];
     };
 
+    /**
+     * get a specified neighbor for a given vertex
+     * \param vertexId The id of the vertex from which the neighbbor should be searched for
+     * \param localNeighborId The local nubmer of the neighbor to be returned (Should be between 0 and vertexNeighborNumber-1)
+     * \param [out] neighborId The output in which the explicit neighborId should be stored in
+     * \return 1 if successfull
+     */
     inline int getVertexNeighbor(
       const SimplexId &vertexId,
       const int &localNeighborId,
@@ -48,6 +61,12 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
 
   private:
+    /**
+     * Transpose the ipmlicite index of an vertex into a case identifyer which denotes
+     * on which border the vertex is positioned.
+     * \param vertexId The Id of the vertex for which the caseId should be searched
+     * \return CaseId as an integer between 0 and 26
+     */
     inline int getCaseID(const ttk::SimplexId& vertexId) const{
       int ex = extent[0];
       int ey = extent[1];
@@ -59,7 +78,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       int xy = (vertexId-z*xyDim);
       int y = xy/ex;
       int x = xy-y*ex;
-      //std::array<int,3> coords = {xy-y*extent[0],y,z};
 
       // case Clasification by coordinates
       int caseID = 0;
@@ -70,7 +88,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       caseID += (!bool(y-(ey-1)))*6; // +6 if y == extent[1]-1
       caseID += (!bool(z))*9; // +9 if z == 0
       caseID += (!bool(z-(ez-1)))*18; // +18 if z == extent[2]-1
-      if(caseID>=27) return 26;
+      if(caseID>=27) return 26; // can not be the case unless Freudenthal3D is used in 2D scenario
       return caseID;
     };
 
