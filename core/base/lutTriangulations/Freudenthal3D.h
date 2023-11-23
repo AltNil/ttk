@@ -68,9 +68,167 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       const int &  	localEdgeId,
       SimplexId &  	edgeId 
     ) 		const {
-      auto offset = lutEdgeOffset[getCaseID(vertexId)][localEdgeId];
-      edgeId = SimplexId(vertexId+offset);
 
+      //todo get calculation procedure of edge
+      
+      int ex = extent[0];
+      int ey = extent[1];
+      int ez = extent[2];
+
+      // Calculate the coordinates of the given vertexId
+      auto xyDim = ex*ey;
+      int z = vertexId/xyDim;
+      int xy = (vertexId-z*xyDim);
+      int y = xy/ex;
+      int x = xy-y*ex;
+      
+      auto coordOffsets = lutNeghborOffset[getCaseID(vertexId)][localEdgeId];
+      int lutIndex = coordOffsets[0]+1+3*(coordOffsets[1]+1)+9*(coordOffsets[2]+1); // generate unique id from coords
+
+      int d1 = (ex-1)*ey*ez;
+      int d2 = d1 + ex*(ey-1)*ez;
+      int d3 = d2 + ex*ey*(ez-1);
+      int d4 = d3 + (ex-1)*(ey-1)*ez;
+      int d5 = d4 + ex*(ey-1)*(ez-1);
+      int d6 = d5 + (ex-1)*ey*(ez-1);
+      switch(lutIndex)
+      {
+        case 12:
+          x -=1;
+          lutIndex = 14;
+          break;
+        case 10:
+          y -= 1;
+          lutIndex = 16;
+          break;
+        case 4:
+          z -= 1;
+          lutIndex = 22;
+          break;
+        case 11:
+          x += 1;
+          y -= 1;
+          lutIndex = 15;
+          break;
+        case 1:
+          y -= 1;
+          z -= 1;
+          lutIndex = 25;
+          break;
+        case 5:
+          x += 1;
+          z -= 1;
+          lutIndex = 21;
+          break;
+        case 2:
+          x += 1;
+          y -= 1;
+          z -= 1;
+          lutIndex = 24;
+          break;
+      }
+      switch (lutIndex)
+      {
+      case 14: // pdf case 1 positive
+        edgeId = x + y*(ex-1)+(z*(ex-1)*ey);
+        break;
+      case 16: // pdf case 2 positive
+        edgeId = d1 + x + (y*ex) + (z*ex*(ey-1));
+        break;
+      case 22: // pdf case 3 positive
+        edgeId = d2 + x + (y*ex) + (z*ex*ey);
+        break;
+      case 15: // pdf case 4 positive
+        edgeId = d3 + (x-1) + y*(ex-1) + z * (ex-1)*(ey-1);
+        break;
+      case 25: // pdf case 5 positive
+        edgeId = d4 + x + y*ex + z * ex * (ey-1);
+        break;
+      case 21: //pdf case 6 positive
+        edgeId = d5 + (x-1) + y * (ex-1) + z * (ex-1) * ey;
+        break;
+      case 24: // pdf case 7 positive
+        //edgeId = -1;
+        edgeId = d6 + (x-1) + y * (ex-1) + z * (ex-1) * (ey-1);
+        break;/*
+      case 12: // pdf case 1 negative
+        edgeId = (x-1)+y*(ex-1)+(z*(ex-1)*ey);
+        break;
+      case 10: // pdf case 2 negative
+        edgeId = d1 + x + ((y-1)*ex) + (z*ex*(ey-1));
+        break;
+      case 4: // pdf case 3 negative
+        edgeId = d2 + x + (y*ex) + ((z-1)*ex*ey);
+        break;
+      case 11: // pdf case 4 negative
+        edgeId = d3 + (x) + (y-1)*(ex-1) + z * (ex-1)*(ey-1);
+        break;
+      case 1: // pdf case 5 negative
+        edgeId = d4 + x + (y-1) * ex + (z-1) * ex * (ey-1);
+        break;
+      case 5: //pdf case 6 negative
+        edgeId = d5 + (x) + y * (ex-1) + (z-1) * (ex-1) * ey;  
+        break;
+      case 2: // pdf case 7 negative
+        edgeId = d6 + (x-1) + (y-1) * ex + (z-1) * (ex-1) * (ey-1);
+        break;*/
+      
+      default:
+        return -1; //something went wrong
+        break;
+      }
+
+
+      //todo calculate edge from coord
+      /*switch (calcId)
+      {
+      case 0: // pdf case 1 positive
+        edgeId = x + y*(ex-1)+(z*(ex-1)*ey);
+        break;
+      case 1: // pdf case 2 positive
+        edgeId = 18 + x + (y*ex) + (z*ex*(ey-1));
+        break;
+      case 2: // pdf case 3 positive
+        edgeId = 36 + x + (y*ex) + (z*ex*ey);
+        break;
+      case 3: // pdf case 4 positive
+        edgeId = 54 + (x-1) + y*(ex-1) + z * (ex-1)*(ey-1);
+        break;
+      case 4: // pdf case 5 positive
+        edgeId = 66 + x + y*ex + z * ex * (ey-1);
+        break;
+      case 5: //pdf case 6 positive
+        edgeId = 78 + (x-1) + y * (ex-1) + z * (ex-1) * ey;
+        break;
+      case 6: // pdf case 7 positive
+        edgeId = 90 + (x-1) + y * ex + z * (ex-1) * (ey-1);
+        break;
+      case 7: // pdf case 1 negative
+        edgeId = (x-1)+y*(ex-1)+(z*(ex-1)*ey);
+        break;
+      case 8: // pdf case 2 negative
+        edgeId = 18 + x + ((y-1)*ex) + (z*ex*(ey-1));
+        break;
+      case 9: // pdf case 3 negative
+        edgeId = 36 + x + (y*ex) + ((z-1)*ex*ey);
+        break;
+      case 10: // pdf case 4 negative
+        edgeId = 54 + (x) + (y-1)*(ex-1) + z * (ex-1)*(ey-1);
+        break;
+      case 11: // pdf case 5 negative
+        edgeId = 66 + x + (y-1) * ex + (z-1) * ex * (ey-1);
+        break;
+      case 12: //pdf case 6 negative
+        edgeId = 78 + (x) + y * (ex-1) + (z-1) * (ex-1) * ey;
+        break;
+      case 13: // pdf case 7 negative
+        edgeId = 90 + (x) + (y-1) * ex + (z-1) * (ex-1) * (ey-1);
+        break;
+      
+      default:
+        return -1; //something went wrong
+        break;
+      }*/
       return 1;
     };
 
