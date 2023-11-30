@@ -20,6 +20,17 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         }
         lutIndexOffset.push_back(shifts);
       }
+
+      // precalculation for the edge calculations
+      int ex = extent[0];
+      int ey = extent[1];
+      int ez = extent[2];
+      d1 = (ex-1)*ey*ez;
+      d2 = d1 + ex*(ey-1)*ez;
+      d3 = d2 + ex*ey*(ez-1);
+      d4 = d3 + (ex-1)*(ey-1)*ez;
+      d5 = d4 + ex*(ey-1)*(ez-1);
+      d6 = d5 + (ex-1)*ey*(ez-1);
     }
 
     ttk::SimplexId getNumberOfVertices() const final {
@@ -59,21 +70,31 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       return 1;
     };
 
-
+    /**
+     * Get the number of adjacent vertices from a given vertex
+     * \param vertexId The id of the vertex the number of edges should be looked up for
+     * \return Number of adjacent edges
+     */
     ttk::SimplexId getVertexEdgeNumber(const SimplexId& vertexId) const {
+      // As every Neighbor vertex induces one edge with the given vertex, it is sufficient to return the number of neighbors.
       return lutNumNeighbour3d[getCaseID(vertexId)];
     };
 
+    /**
+     * Get the id of an specific edge where one endpoint is the given vertex
+     * \param vertexId The id of the vertex where the edge should start
+     * \param localEdgeId The local number of the edge to be searched for. Must be between 0 and vertexEdgeNumber -1.
+     * \param [out] edgeId The output in which the explicit edge id should be stored in
+     * \return 1 if successfull, -1 else
+     */
     int getVertexEdge ( 	const SimplexId &  	vertexId,
       const int &  	localEdgeId,
       SimplexId &  	edgeId 
     ) 		const {
-
-      //todo get calculation procedure of edge
       
+      // prefetch dimensions as those are needed multiple times
       int ex = extent[0];
       int ey = extent[1];
-      int ez = extent[2];
 
       // Calculate the coordinates of the given vertexId
       auto xyDim = ex*ey;
@@ -82,51 +103,12 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       int y = xy/ex;
       int x = xy-y*ex;
       
+      //search for the direction of the edge and tarnsform it to an id
       auto coordOffsets = lutNeghborOffset[getCaseID(vertexId)][localEdgeId];
       int lutIndex = coordOffsets[0]+1+3*(coordOffsets[1]+1)+9*(coordOffsets[2]+1); // generate unique id from coords
 
-      int d1 = (ex-1)*ey*ez;
-      int d2 = d1 + ex*(ey-1)*ez;
-      int d3 = d2 + ex*ey*(ez-1);
-      int d4 = d3 + (ex-1)*(ey-1)*ez;
-      int d5 = d4 + ex*(ey-1)*(ez-1);
-      int d6 = d5 + (ex-1)*ey*(ez-1);
-      switch(lutIndex)
-      {
-        case 12:
-          x -=1;
-          lutIndex = 14;
-          break;
-        case 10:
-          y -= 1;
-          lutIndex = 16;
-          break;
-        case 4:
-          z -= 1;
-          lutIndex = 22;
-          break;
-        case 11:
-          x += 1;
-          y -= 1;
-          lutIndex = 15;
-          break;
-        case 1:
-          y -= 1;
-          z -= 1;
-          lutIndex = 25;
-          break;
-        case 5:
-          x += 1;
-          z -= 1;
-          lutIndex = 21;
-          break;
-        case 2:
-          x += 1;
-          y -= 1;
-          z -= 1;
-          lutIndex = 24;
-          break;
-      }
+      // calculate the explicit id of the searched edge with starting coordinates x, y and z from the starting point(given vertex)
+      // the pdf cases refer to the different layer, in which the edges are enumerated through the grid.
       switch (lutIndex)
       {
       case 14: // pdf case 1 positive
@@ -148,9 +130,8 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         edgeId = d5 + (x-1) + y * (ex-1) + z * (ex-1) * ey;
         break;
       case 24: // pdf case 7 positive
-        //edgeId = -1;
         edgeId = d6 + (x-1) + y * (ex-1) + z * (ex-1) * (ey-1);
-        break;/*
+        break;
       case 12: // pdf case 1 negative
         edgeId = (x-1)+y*(ex-1)+(z*(ex-1)*ey);
         break;
@@ -170,67 +151,50 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         edgeId = d5 + (x) + y * (ex-1) + (z-1) * (ex-1) * ey;  
         break;
       case 2: // pdf case 7 negative
-        edgeId = d6 + (x-1) + (y-1) * ex + (z-1) * (ex-1) * (ey-1);
-        break;*/
+        edgeId = d6 + (x) + (y-1) * (ex-1) + (z-1) * (ex-1) * (ey-1);
+        break;
       
       default:
         return -1; //something went wrong
         break;
       }
 
-
-      //todo calculate edge from coord
-      /*switch (calcId)
-      {
-      case 0: // pdf case 1 positive
-        edgeId = x + y*(ex-1)+(z*(ex-1)*ey);
-        break;
-      case 1: // pdf case 2 positive
-        edgeId = 18 + x + (y*ex) + (z*ex*(ey-1));
-        break;
-      case 2: // pdf case 3 positive
-        edgeId = 36 + x + (y*ex) + (z*ex*ey);
-        break;
-      case 3: // pdf case 4 positive
-        edgeId = 54 + (x-1) + y*(ex-1) + z * (ex-1)*(ey-1);
-        break;
-      case 4: // pdf case 5 positive
-        edgeId = 66 + x + y*ex + z * ex * (ey-1);
-        break;
-      case 5: //pdf case 6 positive
-        edgeId = 78 + (x-1) + y * (ex-1) + z * (ex-1) * ey;
-        break;
-      case 6: // pdf case 7 positive
-        edgeId = 90 + (x-1) + y * ex + z * (ex-1) * (ey-1);
-        break;
-      case 7: // pdf case 1 negative
-        edgeId = (x-1)+y*(ex-1)+(z*(ex-1)*ey);
-        break;
-      case 8: // pdf case 2 negative
-        edgeId = 18 + x + ((y-1)*ex) + (z*ex*(ey-1));
-        break;
-      case 9: // pdf case 3 negative
-        edgeId = 36 + x + (y*ex) + ((z-1)*ex*ey);
-        break;
-      case 10: // pdf case 4 negative
-        edgeId = 54 + (x) + (y-1)*(ex-1) + z * (ex-1)*(ey-1);
-        break;
-      case 11: // pdf case 5 negative
-        edgeId = 66 + x + (y-1) * ex + (z-1) * ex * (ey-1);
-        break;
-      case 12: //pdf case 6 negative
-        edgeId = 78 + (x) + y * (ex-1) + (z-1) * (ex-1) * ey;
-        break;
-      case 13: // pdf case 7 negative
-        edgeId = 90 + (x) + (y-1) * ex + (z-1) * (ex-1) * (ey-1);
-        break;
-      
-      default:
-        return -1; //something went wrong
-        break;
-      }*/
       return 1;
     };
+
+
+    int preconditionVertexTriangles() final {
+      return 1;
+    };
+    ttk::SimplexId getVertexTriangleNumber (const SimplexId &vertexId) const {
+      return -1;
+    };
+    int getVertexTriangle(
+      const SimplexId &vertexId,
+      const int &localTriangleId,
+      SimplexId &triangleId
+    ) const {
+      return 1;
+    };
+
+
+    int preconditionVertexStars() final {
+      return 1;
+    }
+    ttk::SimplexId getVertexStarNumber (const SimplexId &vertexId) const {
+      return -1;
+    };
+    int getVertexStar(
+      const SimplexId &vertexId,
+      const int &localStarId,
+      SimplexId &starId
+    ) const {
+      return 1;
+    };
+
+
+
+
 
   private:
     /**
@@ -303,34 +267,11 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{0, -1, -1}, {0, 0, -1}, {0, -1, 0}, {-1, 0, 0}}
     };
     std::vector<std::vector<int>> lutIndexOffset;
-    const std::vector<std::vector<int>> lutEdgeOffset = {
-      {54, 68, 27, 58, 12, 46, -4, 36, 73, -5, 47, 15, 83, 63},
-      {54, 68, 27, 58, 12, 46, -4, 15, 63, 73},
-      {-5, 47, 15, 36, 73, 83, 63, 27, 54, 12},
-      {-5, 47, 15, 36, 73, 83, 63, -4, 58, 27},
-      {-4, 15, 73, 63, 27, 58},
-      {-5, 47, 15, 36, 73, 83, 63, 27},
-      {54, 68, 27, 58, 12, 46, -4, -5, 36, 73},
-      {54, 68, 27, 58, 12, 46, -4, 73},
-      {12, -5, 36, 73, 54, 27},
-      {-5, 47, 15, 36, 73, 83, 63, 12, 46, -4},
-      {12, 46, -4, 73, 15, 63},
-      {-5, 47, 15, 36, 73, 83, 63, 12},
-      {-5, 47, 15, 36, 73, 83, 63, -4},
-      {-4, 15, 73, 63},
-      {-5, 47, 15, 36, 73, 83, 63},
-      {12, -5, 36, 73, 46, -4},
-      {12, 46, -4, 73},
-      {12, -5, 36, 73},
-      {54, 68, 27, 58, 12, 46, -4, -5, 47, 15},
-      {54, 68, 27, 58, 12, 46, -4, 15},
-      {27, -5, 47, 15, 54, 12},
-      {27, -5, 47, 15, 58, -4},
-      {27, 58, -4, 15},
-      {27, -5, 47, 15},
-      {54, 68, 27, 58, 12, 46, -4, -5},
-      {54, 68, 27, 58, 12, 46, -4},
-      {54, 27, 12, -5}
-    };
+    int d1;
+    int d2;
+    int d3;
+    int d4;
+    int d5;
+    int d6;
   };
 }
