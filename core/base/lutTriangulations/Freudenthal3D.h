@@ -13,7 +13,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
       // precalculate the implicite index offsets for neighbors
       std::vector<std::vector<int>> deltas;
-      for(std::vector<std::array<int,3>> caseId : lutNeghborOffset){
+      for(std::vector<std::array<int,3>> caseId : lutNeighborOffset){
         std::vector<int> shifts;
         for(std::array<int,3> coordDeltas: caseId){
           shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
@@ -46,7 +46,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     ttk::SimplexId getVertexNeighborNumber(const ttk::SimplexId& vertexId)
      const final {
       // return the neigbor by the caseID of the given vertex
-      return lutNumNeighbour3d[getCaseID(vertexId)];
+      return lutNumNeighbor3d[getCaseID(vertexId)];
     };
 
     /**
@@ -77,7 +77,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
      */
     ttk::SimplexId getVertexEdgeNumber(const SimplexId& vertexId) const {
       // As every Neighbor vertex induces one edge with the given vertex, it is sufficient to return the number of neighbors.
-      return lutNumNeighbour3d[getCaseID(vertexId)];
+      return lutNumNeighbor3d[getCaseID(vertexId)];
     };
 
     /**
@@ -104,8 +104,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       int x = xy-y*ex;
       
       //search for the direction of the edge and tarnsform it to an id
-      auto coordOffsets = lutNeghborOffset[getCaseID(vertexId)][localEdgeId];
-      int lutIndex = coordOffsets[0]+1+3*(coordOffsets[1]+1)+9*(coordOffsets[2]+1); // generate unique id from coords
+      int lutIndex = lutEdgeDirection3d[getCaseID(vertexId)][localEdgeId]; // generate unique id from coords
 
       // calculate the explicit id of the searched edge with starting coordinates x, y and z from the starting point(given vertex)
       // the pdf cases refer to the different layer, in which the edges are enumerated through the grid.
@@ -163,32 +162,121 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     };
 
 
+
+
     int preconditionVertexTriangles() final {
       return 1;
     };
+
+    
+
     ttk::SimplexId getVertexTriangleNumber (const SimplexId &vertexId) const {
-      return -1;
+      return lutVertexTriangles3d[getCaseID(vertexId)];
     };
-    int getVertexTriangle(
+    int getVertexTriangle (
       const SimplexId &vertexId,
       const int &localTriangleId,
-      SimplexId &triangleId
+      SimplexId &trinagleId
     ) const {
+      trinagleId = SimplexId(-1);
+      //return 1;
+
+      int dx = extent[0];
+      int dy = extent[1];
+      int dz = extent[2];
+
+      int plane1 = (dx-1)*2*(dy-1)*dz;
+      int plane2 = plane1 + (dx-1)*2*(dy)*(dz-1);
+      int plane3 = plane2 + (dx*(dy-1)*(dz-1)*2);
+      int plane4 = plane3 + (dx-1)*(dy-1)*(dz-1)*2;
+      int plane5 = plane4 + (dx-1)*(dy-1)*(dz)*2;
+
+
+      int caseId = getCaseID(vertexId);
+
+      int lutIndex = lutTriangleDirection3d[caseId][localTriangleId];
+      std::array<int,3> vertexOffset = lutTriangleOffset3d[caseId][localTriangleId];
+
+      int x = vertexOffset[0];
+      int y = vertexOffset[1];
+      int z = vertexOffset[2];
+
+
+      // Calculate the coordinates of the given vertexId
+      auto xyDim = dx*dy;
+      z =+ vertexId/xyDim;
+      int xy = (vertexId-z*xyDim);
+      y =+ xy/dx;
+      x =+ xy-y*dx;
+      // calculate coordinates from id
+
+      // the cases are expecting the smallest point to be the origin of calculation
+      int res = 0;
+      switch (lutIndex){
+        case 446:
+          res = x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy-1);
+          break;
+        case 447: // WICHTIG VON PSMALLEST
+          res = (x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy-1))-1;
+          break;
+
+        case 608:
+          res = plane1+x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy);
+          break;
+        case 609:// SAME AS IN 10
+          res = plane1+(x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy))-1;
+          break;
+
+        case 691: 
+          res = plane2+x*2 + 2*y*(dx)+2*z*(dx)*(dy-1);
+          break;
+        case 697:
+          res = plane2+(x*2 + 2*y*(dx)+2*z*(dx)*(dy-1))+1;
+          break;
+
+        case 659:
+          res = plane3+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          break;
+        case 669:
+          res = plane3+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))+1;
+          break;
+
+        case 689:
+          res = plane4+(2*(x)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          break;
+        case 699: // SAME AS 10
+          res = plane4+(2*(x)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))-1;
+          break;
+
+        case 717:
+          res = plane5+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          break;
+        case 724:
+          res = plane5+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))+1;
+          break;
+      
+      default:
+        return -1;
+        break;
+      }
+      trinagleId = SimplexId(res);
       return 1;
     };
 
 
-    int preconditionVertexStars() final {
-      return 1;
-    }
-    ttk::SimplexId getVertexStarNumber (const SimplexId &vertexId) const {
-      return -1;
+    ttk::SimplexId getVertexStarNumber(const ttk::SimplexId& vertexId) const final {
+      return 0;
     };
+
     int getVertexStar(
       const SimplexId &vertexId,
-      const int &localStarId,
-      SimplexId &starId
-    ) const {
+      const int &localNeighborId,
+      SimplexId &neighborId
+    ) const final {
+      return 1;
+    };
+
+    int preconditionVertexStars() final {
       return 1;
     };
 
@@ -236,8 +324,18 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
 
     const std::array<int,3> extent;
-    const int lutNumNeighbour3d[27] = {14,10,10,10,6,8,10,8,6,10,6,8,8,4,7,6,4,4,10,8,6,6,4,4,8,7,4};
-    const std::vector<std::vector<std::array<int,3>>> lutNeghborOffset = {
+    
+    std::vector<std::vector<int>> lutIndexOffset;
+    int d1;
+    int d2;
+    int d3;
+    int d4;
+    int d5;
+    int d6;
+
+    const int lutNumNeighbor3d[27] = {14,10,10,10,6,8,10,8,6,10,6,8,8,4,7,6,4,4,10,8,6,6,4,4,8,7,4};
+
+    const std::vector<std::vector<std::array<int,3>>> lutNeighborOffset = {
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}, {-1, 0, 1}, {0, 0, 1}, {-1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {-1, 1, 1}, {0, 1, 1}},
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}, {0, 1, 0}, {0, 1, 1}, {0, 0, 1}},
       {{-1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {-1, 0, 1}, {0, 0, 1}, {-1, 1, 1}, {0, 1, 1}, {0, 0, -1}, {0, -1, -1}, {0, -1, 0}},
@@ -266,12 +364,98 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}},
       {{0, -1, -1}, {0, 0, -1}, {0, -1, 0}, {-1, 0, 0}}
     };
-    std::vector<std::vector<int>> lutIndexOffset;
-    int d1;
-    int d2;
-    int d3;
-    int d4;
-    int d5;
-    int d6;
+
+    const std::vector<std::vector<int>> lutEdgeDirection3d = {
+      {1, 2, 4, 5, 10, 11, 14, 21, 22, 12, 15, 16, 24, 25},
+      {1, 2, 4, 5, 10, 11, 14, 16, 25, 22},
+      {12, 15, 16, 21, 22, 24, 25, 4, 1, 10},
+      {12, 15, 16, 21, 22, 24, 25, 14, 5, 4},
+      {14, 16, 22, 25, 4, 5},
+      {12, 15, 16, 21, 22, 24, 25, 4},
+      {1, 2, 4, 5, 10, 11, 14, 12, 21, 22},
+      {1, 2, 4, 5, 10, 11, 14, 22},
+      {10, 12, 21, 22, 1, 4},
+      {12, 15, 16, 21, 22, 24, 25, 10, 11, 14},
+      {10, 11, 14, 22, 16, 25},
+      {12, 15, 16, 21, 22, 24, 25, 10},
+      {12, 15, 16, 21, 22, 24, 25, 14},
+      {14, 16, 22, 25},
+      {12, 15, 16, 21, 22, 24, 25},
+      {10, 12, 21, 22, 11, 14},
+      {10, 11, 14, 22},
+      {10, 12, 21, 22},
+      {1, 2, 4, 5, 10, 11, 14, 12, 15, 16},
+      {1, 2, 4, 5, 10, 11, 14, 16},
+      {4, 12, 15, 16, 1, 10},
+      {4, 12, 15, 16, 5, 14},
+      {4, 5, 14, 16},
+      {4, 12, 15, 16},
+      {1, 2, 4, 5, 10, 11, 14, 12},
+      {1, 2, 4, 5, 10, 11, 14},
+      {1, 4, 10, 12}
+    };
+
+    const int lutVertexTriangles3d[27] = {36,21,21,21,9,15,21,15,9,21,9,15,15,5,12,9,5,5,21,15,9,9,5,5,15,12,5};
+
+    const std::vector<std::vector<int>> lutTriangleDirection3d = {
+      {447, 724, 669, 689, 691, 697, 717, 608, 659, 699, 609, 447, 659, 669, 691, 697, 689, 699, 689, 699, 447, 447, 609, 608, 447, 659, 691, 669, 697, 447, 699, 608, 609, 699, 689, 717},
+      {659, 669, 691, 697, 689, 699, 689, 699, 447, 447, 609, 608, 659, 697, 447, 609, 691, 699, 697, 717, 691},
+      {447, 724, 669, 699, 691, 697, 724, 608, 669, 699, 609, 447, 447, 659, 691, 699, 691, 697, 608, 699, 697},
+      {447, 717, 659, 699, 691, 697, 724, 609, 669, 689, 608, 447, 609, 699, 697, 608, 669, 447, 609, 608, 689},
+      {608, 669, 697, 447, 609, 608, 691, 689, 697},
+      {609, 447, 447, 699, 697, 717, 659, 699, 691, 697, 724, 609, 669, 689, 608},
+      {669, 669, 691, 697, 699, 699, 699, 699, 447, 447, 608, 609, 689, 447, 609, 669, 609, 691, 609, 724, 608},
+      {669, 659, 691, 697, 699, 689, 699, 689, 447, 447, 609, 609, 724, 609, 691},
+      {699, 447, 691, 697, 609, 669, 608, 691, 609},
+      {447, 699, 669, 689, 691, 697, 689, 608, 659, 699, 609, 447, 447, 659, 691, 447, 447, 689, 609, 447, 699},
+      {447, 447, 689, 609, 691, 447, 691, 699, 697},
+      {447, 659, 609, 691, 608, 447, 699, 669, 699, 691, 697, 699, 669, 699, 447},
+      {447, 689, 659, 699, 691, 697, 699, 609, 669, 689, 608, 447, 447, 608, 689},
+      {447, 608, 691, 689, 697},
+      {447, 689, 659, 699, 691, 697, 699, 609, 669, 689, 608, 447},
+      {447, 669, 609, 691, 609, 447, 447, 699, 608},
+      {447, 447, 699, 609, 691},
+      {447, 669, 608, 691, 609},
+      {659, 669, 691, 697, 689, 699, 717, 724, 447, 447, 609, 608, 699, 447, 608, 447, 447, 717, 697, 669, 447},
+      {659, 669, 691, 697, 689, 699, 717, 724, 447, 447, 609, 608, 659, 697, 447},
+      {699, 447, 691, 697, 608, 447, 447, 724, 697},
+      {609, 447, 447, 724, 697, 608, 669, 447, 609},
+      {608, 669, 697, 447, 609},
+      {609, 447, 447, 724, 697},
+      {689, 447, 691, 697, 609, 669, 669, 699, 699, 724, 724, 447, 447, 608, 609},
+      {669, 659, 691, 697, 699, 689, 724, 717, 447, 447, 609, 609},
+      {699, 447, 691, 697, 609}
+    };
+
+    const std::vector<std::vector<std::array<int,3>>> lutTriangleOffset3d = {
+	{{0, 1, 1}, {0, 1, 0}, {0, 1, 1}, {0, 1, 1}, {1, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 1}, {1, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {2, 0, 0}, {2, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {2, 0, 0}, {1, 0, 2}, {2, 0, 2}, {1, 0, 1}, {2, 0, 1}, {1, 1, 0}, {1, 1, 0}, {1, 0, 1}, {1, 0, 1}, {1, 0, 1}, {0, 0, 1}, {1, 1, 0}, {1, 1, 1}, {1, 0, 0}, {0, 1, 0}, {1, 1, 1}, {1, 1, 1}, {0, 1, 2}, {2, 0, 0}},
+	{{1, 0, 0}, {1, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {1, 0, 0}, {0, 0, 2}, {1, 0, 2}, {0, 0, 1}, {1, 0, 1}, {0, 1, 0}, {0, 1, 0}, {1, 1, 0}, {0, 1, 0}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {1, 0, 0}, {0, 0, 1}},
+	{{0, 0, 2}, {1, 1, 0}, {1, 1, 1}, {0, 0, 2}, {2, 1, 1}, {2, 1, 1}, {0, 0, 1}, {1, 1, 1}, {0, 0, 2}, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, {2, 0, 1}, {2, 0, 1}, {2, 0, 1}, {2, 0, 0}, {2, 0, 0}, {2, 0, 0}, {1, 1, 0}, {0, 0, 3}, {2, 1, 0}},
+	{{1, 0, 1}, {1, 0, 0}, {1, 0, 1}, {1, 0, 1}, {1, 0, 1}, {1, 0, 1}, {1, 0, 0}, {1, 0, 1}, {1, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {1, 0, 0}, {1, 0, 2}, {1, 0, 0}, {1, 0, 0}, {2, 0, 0}, {1, 0, 1}, {2, 0, 0}, {1, 0, 1}, {1, 0, 1}},
+	{{0, 0, 0}, {1, 0, 0}, {0, 0, 0}, {0, 0, 1}, {1, 0, 0}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}},
+	{{2, 0, 0}, {1, 0, 1}, {2, 0, 1}, {2, 0, 2}, {2, 0, 0}, {2, 0, 0}, {2, 0, 1}, {2, 0, 1}, {2, 0, 1}, {2, 0, 1}, {2, 0, 0}, {2, 0, 1}, {2, 0, 1}, {1, 0, 1}, {1, 0, 1}},
+	{{1, 1, 0}, {0, 0, 1}, {1, 1, 0}, {1, 1, 0}, {1, 1, 0}, {0, 0, 1}, {1, 1, 2}, {0, 0, 3}, {1, 1, 1}, {0, 0, 2}, {0, 2, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {0, 2, 0}, {0, 1, 1}, {2, 1, 1}, {1, 1, 1}, {0, 2, 1}, {1, 1, 0}, {0, 2, 1}},
+	{{0, 1, 0}, {1, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 2}, {0, 1, 2}, {0, 1, 1}, {0, 1, 1}, {2, 1, 0}, {0, 2, 0}, {0, 1, 0}, {2, 1, 1}, {0, 1, 1}},
+	{{0, 0, 1}, {0, 0, 2}, {2, 1, 0}, {2, 1, 0}, {0, 0, 1}, {1, 1, 1}, {0, 2, 1}, {2, 1, 1}, {0, 0, 2}},
+	{{0, 1, 0}, {0, 1, 2}, {0, 1, 0}, {0, 1, 0}, {1, 1, 0}, {1, 1, 0}, {0, 1, 2}, {0, 1, 0}, {1, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {2, 0, 0}, {1, 0, 2}, {1, 1, 0}, {1, 1, 0}, {1, 1, 0}},
+	{{0, 0, 0}, {1, 0, 0}, {0, 0, 2}, {0, 1, 0}, {0, 0, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}, {0, 1, 0}},
+	{{2, 0, 0}, {2, 0, 0}, {1, 1, 0}, {2, 0, 0}, {1, 1, 0}, {0, 0, 1}, {1, 1, 2}, {1, 1, 0}, {0, 0, 1}, {2, 1, 0}, {2, 1, 0}, {0, 0, 3}, {0, 0, 1}, {1, 1, 0}, {1, 1, 0}},
+	{{1, 0, 0}, {0, 0, 2}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 2}, {1, 0, 0}, {1, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}},
+	{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}},
+	{{2, 0, 0}, {1, 0, 2}, {2, 0, 0}, {2, 0, 0}, {2, 0, 0}, {2, 0, 0}, {2, 0, 2}, {2, 0, 0}, {2, 0, 0}, {1, 0, 0}, {1, 0, 0}, {1, 0, 0}},
+	{{0, 1, 0}, {0, 1, 0}, {2, 1, 0}, {1, 1, 0}, {0, 2, 0}, {1, 1, 0}, {0, 0, 1}, {1, 1, 2}, {0, 2, 0}},
+	{{0, 1, 0}, {0, 1, 0}, {0, 1, 2}, {2, 1, 0}, {0, 1, 0}},
+	{{0, 0, 1}, {1, 1, 0}, {0, 2, 0}, {2, 1, 0}, {0, 0, 1}},
+	{{2, 0, 1}, {2, 0, 1}, {1, 0, 1}, {1, 0, 1}, {1, 0, 1}, {2, 0, 1}, {2, 0, 0}, {2, 0, 0}, {1, 0, 2}, {2, 0, 2}, {1, 1, 1}, {1, 1, 1}, {1, 0, 1}, {1, 0, 2}, {0, 1, 1}, {0, 1, 2}, {0, 1, 2}, {1, 1, 0}, {1, 1, 1}, {0, 0, 2}, {1, 1, 2}},
+	{{1, 0, 1}, {1, 0, 1}, {0, 0, 1}, {0, 0, 1}, {0, 0, 1}, {1, 0, 1}, {1, 0, 0}, {1, 0, 0}, {0, 0, 2}, {1, 0, 2}, {0, 1, 1}, {0, 1, 1}, {1, 1, 1}, {0, 1, 1}, {0, 1, 2}},
+	{{2, 0, 1}, {2, 0, 2}, {2, 0, 1}, {2, 0, 1}, {1, 1, 1}, {1, 1, 2}, {0, 0, 3}, {0, 0, 1}, {2, 1, 1}},
+	{{1, 0, 1}, {0, 0, 2}, {1, 0, 2}, {1, 0, 0}, {1, 0, 1}, {1, 0, 1}, {2, 0, 1}, {1, 0, 2}, {2, 0, 1}},
+	{{0, 0, 1}, {1, 0, 1}, {0, 0, 1}, {0, 0, 2}, {1, 0, 1}},
+	{{2, 0, 1}, {1, 0, 2}, {2, 0, 2}, {2, 0, 0}, {2, 0, 1}},
+	{{0, 1, 1}, {0, 1, 2}, {1, 1, 1}, {1, 1, 1}, {0, 2, 1}, {1, 1, 1}, {0, 0, 2}, {1, 1, 1}, {0, 0, 2}, {1, 1, 0}, {0, 0, 1}, {1, 1, 2}, {0, 0, 3}, {0, 2, 1}, {0, 0, 2}},
+	{{0, 1, 1}, {1, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 1}, {0, 1, 0}, {1, 1, 0}, {0, 1, 2}, {0, 1, 2}, {2, 1, 1}, {0, 2, 1}},
+	{{0, 0, 2}, {0, 0, 3}, {2, 1, 1}, {2, 1, 1}, {0, 0, 2}}
+};
+
   };
 }
