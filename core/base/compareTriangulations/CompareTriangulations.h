@@ -47,10 +47,10 @@ namespace ttk {
       CALLGRIND_TOGGLE_COLLECT;
 
       // Set which method sets should be compared
-      bool testVertexNeigbors = false;
+      bool testVertexNeigbors = true;
       bool testVertexEdges = true;
-      bool testVertexTriangles = false;
-      bool testVertexStar = false;
+      bool testVertexTriangles = true;
+      bool testVertexStars = true;
 
 
 
@@ -61,6 +61,9 @@ namespace ttk {
        * Fest Vertex Neighbor
        */
       auto nVertices = triangulation->getNumberOfVertices();
+      this->printMsg(ttk::debug::Separator::L1);
+      this->printMsg("nVertices: " + std::to_string(nVertices));
+
       if(testVertexNeigbors){
         //fetch data
         std::vector<ttk::SimplexId> nNeighbors(nVertices);
@@ -73,8 +76,6 @@ namespace ttk {
         }
 
         //print data
-        this->printMsg(ttk::debug::Separator::L1);
-        this->printMsg("nVertices: " + std::to_string(nVertices));
         std::stringstream nNeighborsAsString;
         std::copy(nNeighbors.begin(), nNeighbors.end(), std::ostream_iterator<ttk::SimplexId>(nNeighborsAsString, ","));
         this->printMsg("nNeighbors: [" + nNeighborsAsString.str() + "]");
@@ -91,81 +92,79 @@ namespace ttk {
        * Test the edges of vertices
        */
       if(testVertexEdges){
-        //fetch datatiming
-        std::vector<ttk::SimplexId> nEdges(nVertices);
-        std::vector<std::vector<ttk::SimplexId>> edges(nVertices);
-        for(ttk::SimplexId v=0;v<nVertices;v++){
-          nEdges[v] = triangulation->getVertexEdgeNumber(v);
-          edges[v].resize(nEdges[v]);
-          for(ttk::SimplexId n=0; n<nEdges[v]; n++){
-            triangulation->getVertexEdge(v,n,edges[v][n]);
+          //fetch data
+          std::vector<ttk::SimplexId> nEdges(nVertices);
+          std::vector<std::vector<ttk::SimplexId>> edges(nVertices);
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            nEdges[v] = triangulation->getVertexEdgeNumber(v);
+            edges[v].resize(nEdges[v]);
+            for(ttk::SimplexId n=0; n<nEdges[v]; n++)
+              triangulation->getVertexEdge(v,n,edges[v][n]);
           }
-        }
-      
 
-        //print data
-        std::stringstream nEdgesAsString;
-        std::copy(nEdges.begin(), nEdges.end(), std::ostream_iterator<ttk::SimplexId>(nEdgesAsString, ","));
-        this->printMsg("nEdges: [" + nEdgesAsString.str() + "]");
-        for(ttk::SimplexId v=0; v<nVertices; v++){
-          std::stringstream edgesAsString;
-          std::copy(edges[v].begin(), edges[v].end(), std::ostream_iterator<ttk::SimplexId>(edgesAsString, ","));
-          this->printMsg("edges["+std::to_string(v)+"]: [" + edgesAsString.str() + "]");
-        }
-        //todo timing
+          //print data
+          std::stringstream nEdgesAsString;
+          std::copy(nEdges.begin(), nEdges.end(), std::ostream_iterator<ttk::SimplexId>(nEdgesAsString, ","));
+          this->printMsg("nEdges: [" + nEdgesAsString.str() + "]");
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            std::stringstream edgesAsString;
+            std::copy(edges[v].begin(), edges[v].end(), std::ostream_iterator<ttk::SimplexId>(edgesAsString, ","));
+            this->printMsg("edges["+std::to_string(v)+"]: [" + edgesAsString.str() + "]");
+          }
+          //todo timing
       }
 
       /*
        * Test the triangles of vertices
        */
       if(testVertexTriangles){
-        //fetch data
-        std::vector<ttk::SimplexId> nTriangles(nVertices);
-        std::vector<std::vector<ttk::SimplexId>> triangles(nVertices);
-        for(ttk::SimplexId v=0;v<nVertices;v++){
-          nTriangles[v] = triangulation->getVertexTriangleNumber(v);
-          triangles[v].resize(nTriangles[v]);
-          for(ttk::SimplexId n=0; n<nTriangles[v]; n++){
-            triangulation->getVertexTriangle(v,n,triangles[v][n]);
+          //fetch data
+          std::vector<ttk::SimplexId> nTriangles(nVertices);
+          std::vector<std::vector<ttk::SimplexId>> triangles(nVertices);
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            nTriangles[v] = triangulation->getVertexTriangleNumber(v);
+            triangles[v].resize(nTriangles[v]);
+            for(ttk::SimplexId n=0; n<nTriangles[v]; n++)
+              triangulation->getVertexTriangle(v,n,triangles[v][n]);
           }
-        }
 
-        //print data
-        std::stringstream nTrianglesAsString;
-        std::copy(nTriangles.begin(), nTriangles.end(), std::ostream_iterator<ttk::SimplexId>(nTrianglesAsString, ","));
-        this->printMsg("nTriangles: [" + nTrianglesAsString.str() + "]");
-        for(ttk::SimplexId v=0; v<nVertices; v++){
-          std::stringstream trianglesAsString;
-          std::copy(triangles[v].begin(), triangles[v].end(), std::ostream_iterator<ttk::SimplexId>(trianglesAsString, ","));
-          this->printMsg("triangles["+std::to_string(v)+"]: [" + trianglesAsString.str() + "]");
-        }
+          //print data
+          std::stringstream nTrianglesAsString;
+          std::copy(nTriangles.begin(), nTriangles.end(), std::ostream_iterator<ttk::SimplexId>(nTrianglesAsString, ","));
+          this->printMsg("nTriangles: [" + nTrianglesAsString.str() + "]");
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            std::stringstream trianglesAsString;
+            std::copy(triangles[v].begin(), triangles[v].end(), std::ostream_iterator<ttk::SimplexId>(trianglesAsString, ","));
+            this->printMsg("triangles["+std::to_string(v)+"]: [" + trianglesAsString.str() + "]");
+          }
+          //todo timing
       }
 
 
       /*
        * Test the star of vertices
        */
-      if(testVertexStar){
-        //fetch data
-        std::vector<ttk::SimplexId> nStar(nVertices);
-        std::vector<std::vector<ttk::SimplexId>> stars(nVertices);
-        for(ttk::SimplexId v = 0; v < nVertices; v++){
-          nStar[v] = triangulation->getVertexStarNumber(v);
-          stars[v].resize(nStar[v]);
-          for(ttk::SimplexId n = 0; n<nStar[v]; n++){
-            triangulation->getVertexStar(v,n,stars[v][n]);
+      if(testVertexStars){
+          //fetch data
+          std::vector<ttk::SimplexId> nStars(nVertices);
+          std::vector<std::vector<ttk::SimplexId>> stars(nVertices);
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            nStars[v] = triangulation->getVertexStarNumber(v);
+            stars[v].resize(nStars[v]);
+            for(ttk::SimplexId n=0; n<nStars[v]; n++)
+              triangulation->getVertexStar(v,n,stars[v][n]);
           }
-        }
 
-        //print data
-        std::stringstream nStarsAsString;
-        std::copy(nStar.begin(), nStar.end(), std::ostream_iterator<ttk::SimplexId>(nStarsAsString,","));
-        this->printMsg("nStart: [" + nStarsAsString.str() + "]");
-        for(ttk::SimplexId v = 0; v<nVertices; v++){
-          std::stringstream starsAsString;
-          std::copy(stars[v].begin(),stars[v].end(), std::ostream_iterator<ttk::SimplexId>(starsAsString,","));
-          this->printMsg("stars[" + std::to_string(v) + "]: [" + starsAsString.str() + "]");
-        }
+          //print data
+          std::stringstream nStarsAsString;
+          std::copy(nStars.begin(), nStars.end(), std::ostream_iterator<ttk::SimplexId>(nStarsAsString, ","));
+          this->printMsg("nStars: [" + nStarsAsString.str() + "]");
+          for(ttk::SimplexId v=0; v<nVertices; v++){
+            std::stringstream starsAsString;
+            std::copy(stars[v].begin(), stars[v].end(), std::ostream_iterator<ttk::SimplexId>(starsAsString, ","));
+            this->printMsg("stars["+std::to_string(v)+"]: [" + starsAsString.str() + "]");
+          }
+          //todo timing
       }
 
 
