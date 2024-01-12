@@ -18,7 +18,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         for(std::array<int,3> coordDeltas: caseId){
           shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
         }
-        lutIndexOffset.push_back(shifts);
+        lutNeighborIndexOffset.push_back(shifts);
       }
 
       // precalculation for the edge calculations
@@ -31,6 +31,32 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       d4 = d3 + (ex-1)*(ey-1)*ez;
       d5 = d4 + ex*(ey-1)*(ez-1);
       d6 = d5 + (ex-1)*ey*(ez-1);
+
+      // precalculations for the triangle calculations
+      deltas.clear();
+      for (std::vector<std::array<int,3>> caseId : lutTriangleOffset3d){
+        std::vector<int> shifts;
+        for (std::array<int,3> coordDeltas: caseId){
+          shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
+        }
+        lutTriangleIndexOffset.push_back(shifts);
+      }
+
+      plane1 = (ex-1)*2*(ey-1)*ez;
+      plane2 = plane1 + (ex-1)*2*(ey)*(ez-1);
+      plane3 = plane2 + (ex*(ey-1)*(ez-1)*2);
+      plane4 = plane3 + (ex-1)*(ey-1)*(ez-1)*2;
+      plane5 = plane4 + (ex-1)*(ey-1)*(ez-1)*2;
+
+      // precalculations for the star calculations
+      deltas.clear();
+      for (std::vector<std::array<int,3>> caseId : lutTetraOffset3d){
+        std::vector<int> shifts;
+        for (std::array<int,3> coordDeltas: caseId){
+          shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
+        }
+        lutTetraIndexOffsets.push_back(shifts);
+      }
     }
 
     ttk::SimplexId getNumberOfVertices() const final {
@@ -62,7 +88,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       SimplexId &neighborId
     ) const final {
       // vertexid + offset of the local neighbor dependant of the case the vertex is in
-      neighborId = SimplexId(vertexId+lutIndexOffset[getCaseID(vertexId)][localNeighborId]);
+      neighborId = SimplexId(vertexId+lutNeighborIndexOffset[getCaseID(vertexId)][localNeighborId]);
       return 1;
     };
 
@@ -184,36 +210,21 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
       int dx = extent[0];
       int dy = extent[1];
-      int dz = extent[2];
-
-      int plane1 = (dx-1)*2*(dy-1)*dz;
-      int plane2 = plane1 + (dx-1)*2*(dy)*(dz-1);
-      int plane3 = plane2 + (dx*(dy-1)*(dz-1)*2);
-      int plane4 = plane3 + (dx-1)*(dy-1)*(dz-1)*2;
-      int plane5 = plane4 + (dx-1)*(dy-1)*(dz-1)*2;
-
 
       int caseId = getCaseID(vertexId);
 
       int lutIndex = lutTriangleDirection3d[caseId][localTriangleId];
-      std::array<int,3> vertexOffset = lutTriangleOffset3d[caseId][localTriangleId];
+      //std::array<int,3> vertexOffset = lutTriangleOffset3d[caseId][localTriangleId];
 
-      int x = vertexOffset[0];
-      int y = vertexOffset[1];
-      int z = vertexOffset[2];
+      int vId = vertexId + lutTriangleIndexOffset[caseId][localTriangleId];
 
 
       // Calculate the coordinates of the given vertexId
       auto xyDim = dx*dy;
-      int cz = (vertexId/xyDim);
-      int xy = (vertexId-cz*xyDim);
-      int cy = xy/dx;
-      int cx = xy-cy*dx;
-      // calculate coordinates from id
-
-      x = x + cx;
-      y = y + cy;
-      z = z + cz;
+      int z = (vId/xyDim);
+      int xy = (vId-z*xyDim);
+      int y = xy/dx;
+      int x = xy-y*dx;
 
       // the cases are expecting the smallest point to be the origin of calculation
       int res = 0;
@@ -262,6 +273,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
           break;
       
       default:
+        // something went wrong
         return -1;
         break;
       }
@@ -277,35 +289,24 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
     int getVertexStar(
       const SimplexId &vertexId,
-      const int &localNeighborId,
-      SimplexId &neighborId
+      const int &localStarId,
+      SimplexId &starId
     ) const final {
       int dx = extent[0];
       int dy = extent[1];
-      int dz = extent[2];
 
       int caseId = getCaseID(vertexId);
+      
+      int lutIndex = lutTetrahedronDirection3d[caseId][localStarId];
+      int vId = vertexId + lutTetraIndexOffsets[caseId][localStarId];
 
-      int lutIndex = lutTetrahedronDirection3d[caseId][localNeighborId];
-      std::array<int,3> vertexOffset = lutTetraOffset3d[caseId][localNeighborId];
-
-      int x = vertexOffset[0];
-      int y = vertexOffset[1];
-      int z = vertexOffset[2];
-
-
-      // Calculate the coordinates of the given vertexId
       auto xyDim = dx*dy;
-      int cz = (vertexId/xyDim);
-      int xy = (vertexId-cz*xyDim);
-      int cy = xy/dx;
-      int cx = xy-cy*dx;
+      int z = (vId/xyDim);
+      int xy = (vId - z*xyDim);
+      int y = xy/dx;
+      int x = xy-y*dx;
 
-      x = x + cx;
-      y = y + cy;
-      z = z + cz;
-
-      neighborId = 6*(x+y*(dx-1)+z*(dx-1)*(dy-1))+lutIndex;
+      starId = 6*(x+y*(dx-1)+z*(dx-1)*(dy-1))+lutIndex;
 
       return 1;
     };
@@ -359,13 +360,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
     const std::array<int,3> extent;
     
-    std::vector<std::vector<int>> lutIndexOffset;
-    int d1;
-    int d2;
-    int d3;
-    int d4;
-    int d5;
-    int d6;
 
     const int lutNumNeighbor3d[27] = {14,10,10,10,6,8,10,8,6,10,6,8,8,4,7,6,4,4,10,8,6,6,4,4,8,7,4};
 
@@ -398,6 +392,15 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}},
       {{0, -1, -1}, {0, 0, -1}, {0, -1, 0}, {-1, 0, 0}}
     };
+    std::vector<std::vector<int>> lutNeighborIndexOffset;
+
+    // edge tables
+    int d1;
+    int d2;
+    int d3;
+    int d4;
+    int d5;
+    int d6;
 
     const std::vector<std::vector<int>> lutEdgeDirection3d = {
       {1, 2, 4, 5, 10, 11, 14, 21, 22, 12, 15, 16, 24, 25},
@@ -428,6 +431,13 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {1, 2, 4, 5, 10, 11, 14},
       {1, 4, 10, 12}
     };
+
+
+    int plane1;
+    int plane2;
+    int plane3;
+    int plane4;
+    int plane5;
 
     const int lutVertexTriangles3d[27] = {36,21,21,21,9,15,21,15,9,21,9,15,15,5,12,9,5,5,21,15,9,9,5,5,15,12,5};
 
@@ -490,6 +500,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{1, -1, -1}, {1, -1, -1}, {0, -1, -1}, {0, -1, -1}, {0, -1, -1}, {1, -1, -1}, {1, -1, -1}, {1, -1, -1}, {0, -1, 0}, {1, -1, 0}, {0, 0, -1}, {1, 0, -1}},
       {{0, -1, -1}, {0, -1, 0}, {0, -1, -1}, {0, -1, -1}, {0, 0, -1}}
     };
+    std::vector<std::vector<int>> lutTriangleIndexOffset;
   
     const int lutVertexTetrahedrons3d[27] = {24,12,12,12,4,8,12,8,4,12,4,8,8,2,6,4,2,2,12,8,4,4,2,2,8,6,2};
 
@@ -552,5 +563,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {{0,-1,-1},{0,-1,-1},{0,-1,-1},{0,-1,-1},{0,-1,-1},{0,-1,-1}},
       {{-1,-1,-1},{-1,-1,-1}},
     };
+    std::vector<std::vector<int>> lutTetraIndexOffsets;
   };
 }
