@@ -27,12 +27,12 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       }
 
       // precalculation for the edge calculations
-      d1 = (dxm1)*dy*dz;
-      d2 = d1 + dx*(dym1)*dz;
-      d3 = d2 + dx*dy*(dzm1);
-      d4 = d3 + (dxm1)*(dym1)*dz;
-      d5 = d4 + dx*(dym1)*(dzm1);
-      d6 = d5 + (dxm1)*dy*(dzm1);
+      d1 = dxm1*dy*dz;
+      d2 = d1 + dx*dym1*dz;
+      d3 = d2 + dx*dy*dzm1;
+      d4 = d3 + dxm1*dym1*dz;
+      d5 = d4 + dx*dym1*dzm1;
+      d6 = d5 + dxm1*dy*dzm1;
 
       // precalculations for the triangle calculations
       deltas.clear();
@@ -44,11 +44,11 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         lutTriangleIndexOffset.push_back(shifts);
       }
 
-      plane1 = (dxm1)*2*(dym1)*dz;
-      plane2 = plane1 + (dxm1)*2*(dy)*(dzm1);
-      plane3 = plane2 + (dx*(dym1)*(dzm1)*2);
-      plane4 = plane3 + (dxm1)*(dym1)*(dzm1)*2;
-      plane5 = plane4 + (dxm1)*(dym1)*(dzm1)*2;
+      plane1 = dxm1*2*dym1*dz;
+      plane2 = plane1 + dxm1*2*(dy)*dzm1;
+      plane3 = plane2 + (dx*dym1*dzm1*2);
+      plane4 = plane3 + dxm1*dym1*dzm1*2;
+      plane5 = plane4 + dxm1*dym1*dzm1*2;
 
       // precalculations for the star calculations
       deltas.clear();
@@ -139,46 +139,46 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       switch (lutIndex)
       {
       case 14: // pdf case 1 positive
-        edgeId = x + y*(dxm1)+(z*(dxm1)*dy);
+        edgeId = x + y*dxm1+(z*dxm1*dy);
         break;
       case 16: // pdf case 2 positive
-        edgeId = d1 + x + (y*dx) + (z*dx*(dym1));
+        edgeId = d1 + x + (y*dx) + (z*dx*dym1);
         break;
       case 22: // pdf case 3 positive
         edgeId = d2 + x + (y*dx) + (z*dx*dy);
         break;
       case 15: // pdf case 4 positive
-        edgeId = d3 + (x-1) + y*(dxm1) + z * (dxm1)*(dym1);
+        edgeId = d3 + (x-1) + y*dxm1 + z * dxm1*dym1;
         break;
       case 25: // pdf case 5 positive
-        edgeId = d4 + x + y*dx + z * dx * (dym1);
+        edgeId = d4 + x + y*dx + z * dx * dym1;
         break;
       case 21: //pdf case 6 positive
-        edgeId = d5 + (x-1) + y * (dxm1) + z * (dxm1) * dy;
+        edgeId = d5 + (x-1) + y * dxm1 + z * dxm1 * dy;
         break;
       case 24: // pdf case 7 positive
-        edgeId = d6 + (x-1) + y * (dxm1) + z * (dxm1) * (dym1);
+        edgeId = d6 + (x-1) + y * dxm1 + z * dxm1 * dym1;
         break;
       case 12: // pdf case 1 negative
-        edgeId = (x-1)+y*(dxm1)+(z*(dxm1)*dy);
+        edgeId = (x-1)+y*dxm1+(z*dxm1*dy);
         break;
       case 10: // pdf case 2 negative
-        edgeId = d1 + x + ((y-1)*dx) + (z*dx*(dym1));
+        edgeId = d1 + x + ((y-1)*dx) + (z*dx*dym1);
         break;
       case 4: // pdf case 3 negative
         edgeId = d2 + x + (y*dx) + ((z-1)*dx*dy);
         break;
       case 11: // pdf case 4 negative
-        edgeId = d3 + (x) + (y-1)*(dxm1) + z * (dxm1)*(dym1);
+        edgeId = d3 + (x) + (y-1)*dxm1 + z * dxm1*dym1;
         break;
       case 1: // pdf case 5 negative
-        edgeId = d4 + x + (y-1) * dx + (z-1) * dx * (dym1);
+        edgeId = d4 + x + (y-1) * dx + (z-1) * dx * dym1;
         break;
       case 5: //pdf case 6 negative
-        edgeId = d5 + (x) + y * (dxm1) + (z-1) * (dxm1) * dy;  
+        edgeId = d5 + (x) + y * dxm1 + (z-1) * dxm1 * dy;  
         break;
       case 2: // pdf case 7 negative
-        edgeId = d6 + (x) + (y-1) * (dxm1) + (z-1) * (dxm1) * (dym1);
+        edgeId = d6 + (x) + (y-1) * dxm1 + (z-1) * dxm1 * dym1;
         break;
       
       default:
@@ -233,45 +233,45 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
       switch (lutIndex){
         case 446:
-          res = 2*(x + y*(dxm1) + z*(dxm1)*(dym1));
+          res = 2*(x + y*dxm1 + z*dxm1*dym1);
           break;
         case 447:
-          res = 2*(x + y*(dxm1) + z*(dxm1)*(dym1))-1;
+          res = 2*(x + y*dxm1 + z*dxm1*dym1)-1;
           break;
 
         case 608:
-          res = plane1 + 2*(x + y*(dxm1) + z*(dxm1)*(dy));
+          res = plane1 + 2*(x + y*dxm1 + z*dxm1*(dy));
           break;
         case 609:
-          res = plane1 + 2*(x + y*(dxm1) + z*(dxm1)*(dy))-1;
+          res = plane1 + 2*(x + y*dxm1 + z*dxm1*(dy))-1;
           break;
 
         case 691: 
-          res = plane2 + 2*(x + y*(dx) + z*(dx)*(dym1));
+          res = plane2 + 2*(x + y*(dx) + z*(dx)*dym1);
           break;
         case 697:
-          res = plane2 + 2*(x + y*(dx) + z*(dx)*(dym1))+1;
+          res = plane2 + 2*(x + y*(dx) + z*(dx)*dym1)+1;
           break;
 
         case 659:
-          res = plane3 + 2*((x-1) + y*(dxm1) + z*(dxm1)*(dym1));
+          res = plane3 + 2*((x-1) + y*dxm1 + z*dxm1*dym1);
           break;
         case 669:
-          res = plane3 + 2*((x-1) + y*(dxm1) + z*(dxm1)*(dym1))+1;
+          res = plane3 + 2*((x-1) + y*dxm1 + z*dxm1*dym1)+1;
           break;
 
         case 689:
-          res = plane4 + 2*((x) + y*(dxm1) + z*(dxm1)*(dym1));
+          res = plane4 + 2*((x) + y*dxm1 + z*dxm1*dym1);
           break;
         case 699:
-          res = plane4 + 2*((x) + y*(dxm1) + z*(dxm1)*(dym1))-1;
+          res = plane4 + 2*((x) + y*dxm1 + z*dxm1*dym1)-1;
           break;
 
         case 717:
-          res = plane5 + 2*((x-1) + y*(dxm1) + z*(dxm1)*(dym1));
+          res = plane5 + 2*((x-1) + y*dxm1 + z*dxm1*dym1);
           break;
         case 724:
-          res = plane5 + 2*((x-1) + y*(dxm1) + z*(dxm1)*(dym1))+1;
+          res = plane5 + 2*((x-1) + y*dxm1 + z*dxm1*dym1)+1;
           break;
       
       default:
@@ -308,7 +308,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       int y = xy/dx;
       int x = xy-y*dx;
 
-      starId = 6*(x+y*(dxm1)+z*(dxm1)*(dym1))+lutIndex;
+      starId = 6*(x+y*dxm1+z*dxm1*dym1)+lutIndex;
 
       return 1;
     };
@@ -341,11 +341,11 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       int caseID = 0;
       
       caseID += (!bool(x)); // +1 if x == 0
-      caseID += (!bool(x-(dxm1)))*2; // +2 if x == extent[0]-1
+      caseID += (!bool(x-dxm1))*2; // +2 if x == extent[0]-1
       caseID += (!bool(y))*3; // +3 if y == 0
-      caseID += (!bool(y-(dym1)))*6; // +6 if y == extent[1]-1
+      caseID += (!bool(y-dym1))*6; // +6 if y == extent[1]-1
       caseID += (!bool(z))*9; // +9 if z == 0
-      caseID += (!bool(z-(dzm1)))*18; // +18 if z == extent[2]-1
+      caseID += (!bool(z-dzm1))*18; // +18 if z == extent[2]-1
       if(caseID>=27) return 26; // can not be the case unless Freudenthal3D is used in 2D scenario
       return caseID;
     };
