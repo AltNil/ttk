@@ -16,8 +16,11 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       dym1=extent[1]-1;
       dz=extent[2];
       dzm1=extent[2]-1;
-      // precalculate the implicite index offsets for neighbors
-      std::vector<std::vector<int>> deltas;
+
+      /* 
+       * precalculate the implicite index offsets for neighbors
+       */
+      //std::vector<std::vector<int>> deltas;
       for(std::vector<std::array<int,3>> caseId : lutNeighborOffset){
         std::vector<int> shifts;
         for(std::array<int,3> coordDeltas: caseId){
@@ -26,16 +29,20 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         lutNeighborIndexOffset.push_back(shifts);
       }
 
-      // precalculation for the edge calculations
-      d1 = dxm1*dy*dz;
-      d2 = d1 + dx*dym1*dz;
-      d3 = d2 + dx*dy*dzm1;
-      d4 = d3 + dxm1*dym1*dz;
-      d5 = d4 + dx*dym1*dzm1;
-      d6 = d5 + dxm1*dy*dzm1;
+      /*
+       * precalculation for the edge calculations
+       */
+      edgeDimension1 = dxm1*dy*dz;
+      edgeDimension2 = edgeDimension1 + dx*dym1*dz;
+      edgeDimension3 = edgeDimension2 + dx*dy*dzm1;
+      edgeDimension4 = edgeDimension3 + dxm1*dym1*dz;
+      edgeDimension5 = edgeDimension4 + dx*dym1*dzm1;
+      edgeDimension6 = edgeDimension5 + dxm1*dy*dzm1;
 
-      // precalculations for the triangle calculations
-      deltas.clear();
+      /*
+       * precalculations for the triangle calculations
+       */
+      //deltas.clear();
       for (std::vector<std::array<int,3>> caseId : lutTriangleOffset3d){
         std::vector<int> shifts;
         for (std::array<int,3> coordDeltas: caseId){
@@ -50,8 +57,10 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       plane4 = plane3 + dxm1*dym1*dzm1*2;
       plane5 = plane4 + dxm1*dym1*dzm1*2;
 
-      // precalculations for the star calculations
-      deltas.clear();
+      /*
+       * precalculations for the star calculations
+       */
+      //deltas.clear();
       for (std::vector<std::array<int,3>> caseId : lutTetraOffset3d){
         std::vector<int> shifts;
         for (std::array<int,3> coordDeltas: caseId){
@@ -142,43 +151,43 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         edgeId = x + y*dxm1+(z*dxm1*dy);
         break;
       case 16: // pdf case 2 positive
-        edgeId = d1 + x + (y*dx) + (z*dx*dym1);
+        edgeId = edgeDimension1 + x + (y*dx) + (z*dx*dym1);
         break;
       case 22: // pdf case 3 positive
-        edgeId = d2 + x + (y*dx) + (z*dx*dy);
+        edgeId = edgeDimension2 + x + (y*dx) + (z*dx*dy);
         break;
       case 15: // pdf case 4 positive
-        edgeId = d3 + (x-1) + y*dxm1 + z * dxm1*dym1;
+        edgeId = edgeDimension3 + (x-1) + y*dxm1 + z * dxm1*dym1;
         break;
       case 25: // pdf case 5 positive
-        edgeId = d4 + x + y*dx + z * dx * dym1;
+        edgeId = edgeDimension4 + x + y*dx + z * dx * dym1;
         break;
       case 21: //pdf case 6 positive
-        edgeId = d5 + (x-1) + y * dxm1 + z * dxm1 * dy;
+        edgeId = edgeDimension5 + (x-1) + y * dxm1 + z * dxm1 * dy;
         break;
       case 24: // pdf case 7 positive
-        edgeId = d6 + (x-1) + y * dxm1 + z * dxm1 * dym1;
+        edgeId = edgeDimension6 + (x-1) + y * dxm1 + z * dxm1 * dym1;
         break;
       case 12: // pdf case 1 negative
         edgeId = (x-1)+y*dxm1+(z*dxm1*dy);
         break;
       case 10: // pdf case 2 negative
-        edgeId = d1 + x + ((y-1)*dx) + (z*dx*dym1);
+        edgeId = edgeDimension1 + x + ((y-1)*dx) + (z*dx*dym1);
         break;
       case 4: // pdf case 3 negative
-        edgeId = d2 + x + (y*dx) + ((z-1)*dx*dy);
+        edgeId = edgeDimension2 + x + (y*dx) + ((z-1)*dx*dy);
         break;
       case 11: // pdf case 4 negative
-        edgeId = d3 + (x) + (y-1)*dxm1 + z * dxm1*dym1;
+        edgeId = edgeDimension3 + (x) + (y-1)*dxm1 + z * dxm1*dym1;
         break;
       case 1: // pdf case 5 negative
-        edgeId = d4 + x + (y-1) * dx + (z-1) * dx * dym1;
+        edgeId = edgeDimension4 + x + (y-1) * dx + (z-1) * dx * dym1;
         break;
       case 5: //pdf case 6 negative
-        edgeId = d5 + (x) + y * dxm1 + (z-1) * dxm1 * dy;  
+        edgeId = edgeDimension5 + (x) + y * dxm1 + (z-1) * dxm1 * dy;  
         break;
       case 2: // pdf case 7 negative
-        edgeId = d6 + (x) + (y-1) * dxm1 + (z-1) * dxm1 * dym1;
+        edgeId = edgeDimension6 + (x) + (y-1) * dxm1 + (z-1) * dxm1 * dym1;
         break;
       
       default:
@@ -399,12 +408,12 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     std::vector<std::vector<int>> lutNeighborIndexOffset;
 
     // edge tables
-    int d1;
-    int d2;
-    int d3;
-    int d4;
-    int d5;
-    int d6;
+    int edgeDimension1;
+    int edgeDimension2;
+    int edgeDimension3;
+    int edgeDimension4;
+    int edgeDimension5;
+    int edgeDimension6;
 
     const std::vector<std::vector<int>> lutEdgeDirection3d = {
       {1, 2, 4, 5, 10, 11, 14, 21, 22, 12, 15, 16, 24, 25},
