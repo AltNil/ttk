@@ -231,45 +231,45 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
 
       switch (lutIndex){
         case 446:
-          res = x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy-1);
+          res = 2*(x + y*(dx-1) + z*(dx-1)*(dy-1));
           break;
         case 447:
-          res = (x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy-1))-1;
+          res = 2*(x + y*(dx-1) + z*(dx-1)*(dy-1))-1;
           break;
 
         case 608:
-          res = plane1+x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy);
+          res = plane1 + 2*(x + y*(dx-1) + z*(dx-1)*(dy));
           break;
         case 609:
-          res = plane1+(x*2 + 2*y*(dx-1)+2*z*(dx-1)*(dy))-1;
+          res = plane1 + 2*(x + y*(dx-1) + z*(dx-1)*(dy))-1;
           break;
 
         case 691: 
-          res = plane2+x*2 + 2*y*(dx)+2*z*(dx)*(dy-1);
+          res = plane2 + 2*(x + y*(dx) + z*(dx)*(dy-1));
           break;
         case 697:
-          res = plane2+(x*2 + 2*y*(dx)+2*z*(dx)*(dy-1))+1;
+          res = plane2 + 2*(x + y*(dx) + z*(dx)*(dy-1))+1;
           break;
 
         case 659:
-          res = plane3+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          res = plane3 + 2*((x-1) + y*(dx-1) + z*(dx-1)*(dy-1));
           break;
         case 669:
-          res = plane3+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))+1;
+          res = plane3 + 2*((x-1) + y*(dx-1) + z*(dx-1)*(dy-1))+1;
           break;
 
         case 689:
-          res = plane4+(2*(x)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          res = plane4 + 2*((x) + y*(dx-1) + z*(dx-1)*(dy-1));
           break;
         case 699:
-          res = plane4+(2*(x)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))-1;
+          res = plane4 + 2*((x) + y*(dx-1) + z*(dx-1)*(dy-1))-1;
           break;
 
         case 717:
-          res = plane5+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1));
+          res = plane5 + 2*((x-1) + y*(dx-1) + z*(dx-1)*(dy-1));
           break;
         case 724:
-          res = plane5+(2*(x-1)+2*y*(dx-1)+2*z*(dx-1)*(dy-1))+1;
+          res = plane5 + 2*((x-1) + y*(dx-1) + z*(dx-1)*(dy-1))+1;
           break;
       
       default:
