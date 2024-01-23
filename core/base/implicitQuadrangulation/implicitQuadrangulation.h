@@ -118,6 +118,8 @@ namespace ttk {
     int dz;
     int dzm1;
 
-    
+    const std::vector<std::vector<std::array<int,3>>> lutNeighborOffset;
+    std::vector<std::vector<int>> lutNeighborIndexOffset;   
   };
+
 } // namespace ttk
