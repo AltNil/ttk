@@ -1,0 +1,4 @@
+NAME
+  ttkimplicitQuadrangulation
+DEPENDS
+  ttkAlgorithm

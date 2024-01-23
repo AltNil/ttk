@@ -52,7 +52,7 @@ namespace ttk {
       bool testVertexTriangles = true;
       bool testVertexStars = true;
 
-      bool completeOutput = false;
+      bool completeOutput = true;
 
 
       ttk::Timer globalTimer;

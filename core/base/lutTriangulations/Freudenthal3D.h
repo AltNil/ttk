@@ -445,7 +445,6 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
       {1, 4, 10, 12}
     };
 
-
     int plane1;
     int plane2;
     int plane3;

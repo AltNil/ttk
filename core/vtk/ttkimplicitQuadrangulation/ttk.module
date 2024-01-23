@@ -1,0 +1,10 @@
+NAME
+  ttkimplicitQuadrangulation
+SOURCES
+  ttkimplicitQuadrangulation.cpp
+HEADERS
+  ttkimplicitQuadrangulation.h
+DEPENDS
+  implicitQuadrangulation
+  lutTriangulations
+  ttkAlgorithm
