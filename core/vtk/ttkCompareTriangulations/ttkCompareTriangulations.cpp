@@ -12,6 +12,7 @@
 #include <ttkUtils.h>
 
 #include <Freudenthal3D.h>
+#include <ImplicitQuadrangulation.h>
 
 // A VTK macro that enables the instantiation of this class via ::New()
 // You do not have to modify this
@@ -60,6 +61,10 @@ int ttkCompareTriangulations::RequestData(vtkInformation *ttkNotUsed(request),
   auto lut_triangulation = new ttk::Freudenthal3D({dim[0],dim[1],dim[2]});
   this->preconditionTriangulation(lut_triangulation);
   this->printTriangulation<ttk::Freudenthal3D>( lut_triangulation );
+
+  auto quadrangulation = new ttk::ImplicitQuadrangulation({dim[0],dim[1],dim[2]});
+  this->preconditionTriangulation(quadrangulation);
+  this->printTriangulation<ttk::ImplicitQuadrangulation>(quadrangulation);
 
   // return success
   return 1;

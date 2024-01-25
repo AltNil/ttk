@@ -49,10 +49,10 @@ namespace ttk {
       // Set which method sets should be compared
       bool testVertexNeigbors = true;
       bool testVertexEdges = true;
-      bool testVertexTriangles = true;
-      bool testVertexStars = true;
+      bool testVertexTriangles = false;
+      bool testVertexStars = false;
 
-      bool completeOutput = true;
+      bool completeOutput = false;
 
 
       ttk::Timer globalTimer;
