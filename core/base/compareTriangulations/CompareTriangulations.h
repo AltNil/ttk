@@ -49,10 +49,11 @@ namespace ttk {
       // Set which method sets should be compared
       bool testVertexNeigbors = true;
       bool testVertexEdges = true;
-      bool testVertexTriangles = false;
-      bool testVertexStars = false;
+      bool testVertexTriangles = true;
+      bool testVertexStars = true;
 
       bool completeOutput = false;
+      bool compareImprovement = false;
 
 
       ttk::Timer globalTimer;
@@ -100,7 +101,7 @@ namespace ttk {
         std::vector<ttk::SimplexId> nEdges(nVertices);
         std::vector<std::vector<ttk::SimplexId>> edges(nVertices);
         for(ttk::SimplexId v=0; v<nVertices; v++){
-          nEdges[v] = triangulation->getVertexEdgeNumber(v);
+          nEdges[v] = compareImprovement? 3 : triangulation->getVertexEdgeNumber(v);
           edges[v].resize(nEdges[v]);
           for(ttk::SimplexId n=0; n<nEdges[v]; n++)
             triangulation->getVertexEdge(v,n,edges[v][n]);
@@ -128,7 +129,7 @@ namespace ttk {
         std::vector<ttk::SimplexId> nTriangles(nVertices);
         std::vector<std::vector<ttk::SimplexId>> triangles(nVertices);
         for(ttk::SimplexId v=0; v<nVertices; v++){
-          nTriangles[v] = triangulation->getVertexTriangleNumber(v);
+          nTriangles[v] = compareImprovement ? 3 : triangulation->getVertexTriangleNumber(v);
           triangles[v].resize(nTriangles[v]);
           for(ttk::SimplexId n=0; n<nTriangles[v]; n++)
             triangulation->getVertexTriangle(v,n,triangles[v][n]);
@@ -157,7 +158,7 @@ namespace ttk {
         std::vector<ttk::SimplexId> nStars(nVertices);
         std::vector<std::vector<ttk::SimplexId>> stars(nVertices);
         for(ttk::SimplexId v=0; v<nVertices; v++){
-          nStars[v] = triangulation->getVertexStarNumber(v);
+          nStars[v] = compareImprovement ? 1 : triangulation->getVertexStarNumber(v);
           stars[v].resize(nStars[v]);
           for(ttk::SimplexId n=0; n<nStars[v]; n++)
             triangulation->getVertexStar(v,n,stars[v][n]);

@@ -9,49 +9,99 @@ namespace ttk {
 
   public:
     ImplicitQuadrangulation(std::array<int,3> extent_) : extent(extent_){
-      dx=extent[0];
-      dxm1=extent[0]-1;
-      dy=extent[1];
-      dym1=extent[1]-1;
-      dz=extent[2];
-      dzm1=extent[2]-1;
+        dx=extent[0];
+        dxm1=extent[0]-1;
+        dy=extent[1];
+        dym1=extent[1]-1;
+        dz=extent[2];
+        dzm1=extent[2]-1;
 
 
 
-      for (std::vector<std::array<int,3>> caseId : lutNeighborOffset){
-        std::vector<int> shifts;
-        for (std::array<int,3> coordDeltas: caseId){
-          shifts.push_back(coordDeltas[0]+coordDeltas[1]*dx+(dx*dy*coordDeltas[2]));
+        for (std::vector<std::array<int,3>> caseId : lutNeighborOffset){
+            std::vector<int> shifts;
+            for (std::array<int,3> coordDeltas: caseId){
+                shifts.push_back(coordDeltas[0]+coordDeltas[1]*dx+(dx*dy*coordDeltas[2]));
+            }
+            lutNeighborIndexOffset.push_back(shifts);
         }
-        lutNeighborIndexOffset.push_back(shifts);
-      }
 
-      int offset = getNumberOfVertices();
-      for (std::vector<std::array<int,3>> caseId : lutNeighborOffset){
-        std::vector<int> shifts;
-        for (std::array<int,3> coordDeltas: caseId){
-          int off = 0;
-          if (coordDeltas[1] != 0){
-            off += offset;
-          }
-          if (coordDeltas[2] != 0){
-            off += offset;
-          }
-          int indexDelta = coordDeltas[0];
-          if (coordDeltas[0] == -1){
-            indexDelta += coordDeltas[0];
-          }
-          if (coordDeltas[1] == -1){
-            indexDelta += coordDeltas[1]*dx;
-          }
-          if (coordDeltas[2] == -1){
-            indexDelta += dx*dy*coordDeltas[2];
-          }
-          
-          shifts.push_back(indexDelta+offset);
+        int offset = getNumberOfVertices();
+        for (std::vector<std::array<int,3>> caseId : lutNeighborOffset){
+            std::vector<int> shifts;
+            for (std::array<int,3> coordDeltas: caseId){
+                int off = 0;
+                if (coordDeltas[1] != 0){
+                    off += offset;
+                }
+                if (coordDeltas[2] != 0){
+                    off += offset;
+                }
+                int indexDelta = coordDeltas[0];
+                if (coordDeltas[0] == -1){
+                    indexDelta += coordDeltas[0];
+                }
+                if (coordDeltas[1] == -1){
+                    indexDelta += coordDeltas[1]*dx;
+                }
+                if (coordDeltas[2] == -1){
+                    indexDelta += dx*dy*coordDeltas[2];
+                }
+                
+                shifts.push_back(indexDelta+off);
+            }
+            lutEdgeIndexOffset.push_back(shifts);
         }
-        lutEdgeIndexOffset.push_back(shifts);
-      }
+
+        //Quadrats
+
+        for (std::vector<std::array<int,3>> caseId : lutQuadradOffset){
+            std::vector<int> shifts;
+            for (std::array<int,3> coordDeltas: caseId){
+                //xy direction -> + 0
+                int off = 0;
+                //xz direction
+                if (coordDeltas[0] != 0 && coordDeltas[2] != 0){
+                    off += offset;
+                }
+                //yz direction
+                if (coordDeltas[1] != 0 && coordDeltas[2] != 0){
+                    off += offset;
+                }
+                int indexDelta = coordDeltas[0];
+                if (coordDeltas[0] == -1){
+                    indexDelta += coordDeltas[0];
+                }
+                if (coordDeltas[1] == -1){
+                    indexDelta += coordDeltas[1]*dx;
+                }
+                if (coordDeltas[2] == -1){
+                    indexDelta += dx*dy*coordDeltas[2];
+                }
+                
+                shifts.push_back(indexDelta+off);
+            }
+            lutQuadratIndexOffset.push_back(shifts);
+        }
+
+        //cube
+        for (std::vector<std::array<int,3>> caseId : lutCubeOffest){
+            std::vector<int> shifts;
+            for (std::array<int,3> coordDeltas: caseId){
+                int indexDelta = 0;
+                if (coordDeltas[0] == -1){
+                    indexDelta += coordDeltas[0];
+                }
+                if (coordDeltas[1] == -1){
+                    indexDelta += coordDeltas[1]*dx;
+                }
+                if (coordDeltas[2] == -1){
+                    indexDelta += dx*dy*coordDeltas[2];
+                }
+                shifts.push_back(indexDelta);
+            }
+            lutCubeIndexOffset.push_back(shifts);
+        }
     };
 
 
@@ -86,19 +136,19 @@ namespace ttk {
       const int &localEdgeId,
       SimplexId &edgeId
     ) const final {
-      edgeId = SimplexId(vertexId + lutEdgeIndexOffset[getCaseID(vertexId)][localEdgeId]);
-      return 1;
+        edgeId = SimplexId(vertexId + lutEdgeIndexOffset[getCaseID(vertexId)][localEdgeId]);
+        return 1;
     };
 
     int preconditionVertexEdges() final {
-      return 1;
+        return 1;
     };
 
     /**
      * Returns Quadrants instead of Triangles
      */
     ttk::SimplexId getVertexTriangleNumber(const ttk::SimplexId& vertexId) const final {
-      return 0;
+        return lutQuadratNumber[getCaseID(vertexId)];
     };
 
     int getVertexTriangle(
@@ -106,15 +156,16 @@ namespace ttk {
       const int &localTriangleId,
       SimplexId &triangleId
     ) const final {
-      return 1;
+        triangleId = SimplexId(vertexId + lutQuadratIndexOffset[getCaseID(vertexId)][localTriangleId]);
+        return 1;
     };
 
     int preconditionVertexTriangles() final {
-      return 1;
+        return 1;
     };
 
     ttk::SimplexId getVertexStarNumber(const ttk::SimplexId& vertexId) const final {
-      return 0;
+        return lutCubeNumber[getCaseID(vertexId)];
     };
 
     int getVertexStar(
@@ -122,11 +173,12 @@ namespace ttk {
       const int &localStarId,
       SimplexId &starId
     ) const final {
-      return 1;
+        starId = SimplexId(vertexId + lutCubeIndexOffset[getCaseID(vertexId)][localStarId]);
+        return 1;
     };
 
     int preconditionVertexStars() final {
-      return 1;
+        return 1;
     };
 
 
@@ -163,6 +215,7 @@ namespace ttk {
     int dz;
     int dzm1;
 
+    std::array<int, 27> lutVertexNeighborNumber = {6,5,5,5,4,4,5,4,4,5,4,4,4,3,3,4,3,3,5,4,4,4,3,3,4,3,3};
     const std::vector<std::vector<std::array<int,3>>> lutNeighborOffset = {
       {{-1,0,0},{0,0,-1},{0,-1,0},{1,0,0},{0,0,1},{0,1,0}},
       {{0,0,-1},{0,-1,0},{1,0,0},{0,0,1},{0,1,0}},
@@ -193,10 +246,72 @@ namespace ttk {
       {{-1,0,0},{0,0,-1},{0,-1,0}}
     };
     std::vector<std::vector<int>> lutNeighborIndexOffset;   
-    std::array<int, 27> lutVertexNeighborNumber = {6,5,5,5,4,4,5,4,4,5,4,4,4,3,3,4,3,3,5,4,4,4,3,3,4,3,3};
 
     std::vector<std::vector<int>> lutEdgeIndexOffset;
 
-  };
+    std::array<int, 27> lutQuadratNumber = {12,6,8,5,5,5,8,5,5,8,5,5,5,3,3,5,3,3,8,6,6,5,3,3,5,3,3};
+    std::vector<std::vector<std::array<int,3>>> lutQuadradOffset = {
+        {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{-1,0,-1},{1,0,-1},{1,0,1},{-1,0,1},{0,-1,-1},{0,-1,1},{0,1,1},{0,1,-1}},
+        {{1,-1,0},{1,1,0},{1,0,-1},{1,0,1},{0,1,1},{0,1,-1}},
+        {{-1,-1,0},{-1,1,0},{-1,0,-1},{-1,0,1},{0,-1,-1},{0,-1,1},{0,1,1},{0,1,-1}},
+        {{1,1,0},{-1,1,0},{1,0,1},{-1,0,1},{0,1,1}},
+        {{1,1,0},{1,0,-1},{1,0,1},{0,1,1},{0,1,-1}},
+        {{-1,1,0},{-1,0,-1},{-1,0,1},{0,1,1},{0,1,-1}},
+        {{-1,-1,0},{1,-1,0},{-1,0,-1},{1,0,-1},{1,0,1},{-1,0,1},{0,-1,-1},{0,-1,1}},
+        {{1,-1,0},{1,0,-1},{1,0,1},{0,-1,-1},{0,-1,1}},
+        {{-1,-1,0},{-1,0,-1},{-1,0,1},{0,-1,-1},{0,-1,1}},
+        {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{1,0,1},{-1,0,1},{0,-1,1},{0,1,1}},
+        {{1,-1,0},{1,1,0},{1,0,1},{0,-1,1},{0,1,1}},
+        {{1,1,0},{-1,1,0},{-1,0,1},{0,-1,1},{0,1,1}},
+        {{-1,1,0},{1,1,0},{-1,0,1},{1,0,1},{0,1,1}},
+        {{1,1,0},{1,0,1},{0,1,1}},
+        {{-1,1,0},{-1,0,1},{0,1,1}},
+        {{-1,-1,0},{1,-1,0},{1,0,1},{-1,0,1},{0,-1,1}},
+        {{1,-1,0},{1,0,1},{0,-1,1}},
+        {{-1,-1,0},{-1,0,1},{0,-1,1}},
+        {{-1,-1,0},{1,-1,0},{1,1,0},{-1,1,0},{-1,0,-1},{1,0,-1},{0,-1,-1},{0,1,-1}},
+        {{1,-1,0},{1,1,0},{1,0,-1},{1,0,1},{0,-1,-1},{0,1,-1}},
+        {{-1,-1,0},{-1,1,0},{-1,0,-1},{-1,0,1},{0,-1,-1},{0,1,-1}},
+        {{1,1,0},{-1,1,0},{-1,0,-1},{1,0,-1},{0,1,-1}},
+        {{1,1,0},{1,0,-1},{0,1,-1}},
+        {{-1,1,0},{-1,0,-1},{0,1,-1}},
+        {{-1,-1,0},{1,-1,0},{-1,0,-1},{1,0,-1},{0,-1,-1}},
+        {{1,-1,0},{1,0,-1},{0,-1,-1}},
+        {{-1,-1,0},{-1,0,-1},{0,-1,-1}}
+    };
+    std::vector<std::vector<int>> lutQuadratIndexOffset;
+  
+    std::array<int,27> lutCubeNumber = {8,4,4,4,2,2,4,2,2,4,2,2,2,1,1,2,1,1,4,2,2,2,1,1,2,1,1};
+    std::vector<std::vector<std::array<int,3>>> lutCubeOffest = {
+        {{-1,-1,-1},{1,-1,-1},{1,-1,1},{-1,-1,1},{-1,1,-1},{1,1,-1},{1,1,1},{-1,1,1}},
+        {{1,-1,-1},{1,-1,1},{1,1,1},{1,1,-1}},
+        {{-1,-1,-1},{-1,-1,1},{-1,1,1},{-1,1,-1}},
+        {{-1,1,-1},{1,1,-1},{1,1,1},{-1,1,1}},
+        {{1,1,-1},{1,1,1}},
+        {{-1,1,-1},{-1,1,1}},
+        {{-1,-1,-1},{1,-1,-1},{1,-1,1},{-1,-1,1}},
+        {{1,-1,-1},{1,-1,1}},
+        {{-1,-1,-1},{-1,-1,1}},
+        {{-1,-1,1},{1,-1,1},{1,1,1},{-1,1,1}},
+        {{1,-1,1},{1,1,1}},
+        {{-1,-1,1},{-1,1,1}},
+        {{1,1,1},{-1,1,1}},
+        {{1,1,1}},
+        {{-1,1,1}},
+        {{-1,-1,1},{1,-1,1}},
+        {{1,-1,1}},
+        {{-1,-1,1}},
+        {{-1,-1,-1},{1,-1,-1},{1,1,-1},{-1,1,-1}},
+        {{1,-1,-1},{1,1,-1}},
+        {{-1,-1,-1},{-1,1,-1}},
+        {{-1,1,-1},{1,1,-1}},
+        {{1,1,-1}},
+        {{-1,1,-1}},
+        {{-1,-1,-1},{1,-1,-1}},
+        {{1,-1,-1}},
+        {{-1,-1,-1}}
+    };
+    std::vector<std::vector<int>> lutCubeIndexOffset;
 
+  }; // class ImplicitQuadrangulation
 } // namespace ttk
