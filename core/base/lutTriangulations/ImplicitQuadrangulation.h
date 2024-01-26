@@ -62,11 +62,11 @@ namespace ttk {
                 int off = 0;
                 //xz direction
                 if (coordDeltas[0] != 0 && coordDeltas[2] != 0){
-                    off += offset;
+                    off = offset;
                 }
                 //yz direction
                 if (coordDeltas[1] != 0 && coordDeltas[2] != 0){
-                    off += offset;
+                    off = 2*offset;
                 }
                 int indexDelta = coordDeltas[0];
                 if (coordDeltas[0] == -1){
