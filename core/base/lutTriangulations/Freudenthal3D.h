@@ -50,7 +50,23 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
         }
         lutTriangleIndexOffset.push_back(shifts);
       }
+ dxm1*2*dym1*dz;
+      plane2 = plane1 + dxm1*2*(dy)*dzm1;
+      plane3 = plane2 + (dx*dym1*dzm1*2);
+      plane4 = plane3 + dxm1*dym1*dzm1*2;
+      plane5 = plane4 + dxm1*dym1*dzm1*2;
 
+      /*
+       * precalculations for the star calculations
+       */
+      //deltas.clear();
+      for (std::vector<std::array<int,3>> caseId : lutTetraOffset3d){
+        std::vector<int> shifts;
+        for (std::array<int,3> coordDeltas: caseId){
+          shifts.push_back(coordDeltas[0]+coordDeltas[1]*extent[0]+(extent[0]*extent[1]*coordDeltas[2]));
+        }
+        lutTetraIndexOffsets.push_back(shifts);
+      }
       plane1 = dxm1*2*dym1*dz;
       plane2 = plane1 + dxm1*2*(dy)*dzm1;
       plane3 = plane2 + (dx*dym1*dzm1*2);
@@ -375,7 +391,8 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     
 
     const int lutNumNeighbor3d[27] = {14,10,10,10,6,8,10,8,6,10,6,8,8,4,7,6,4,4,10,8,6,6,4,4,8,7,4};
-
+    //std::array<int, 27> lutNumNeighbor3d = {6,5,5,5,4,4,5,4,4,5,4,4,4,3,3,4,3,3,5,4,4,4,3,3,4,3,3}; //option from quadrangulation to make comparisons
+    
     const std::vector<std::vector<std::array<int,3>>> lutNeighborOffset = {
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}, {-1, 0, 1}, {0, 0, 1}, {-1, 0, 0}, {-1, 1, 0}, {0, 1, 0}, {-1, 1, 1}, {0, 1, 1}},
       {{0, -1, -1}, {1, -1, -1}, {0, 0, -1}, {1, 0, -1}, {0, -1, 0}, {1, -1, 0}, {1, 0, 0}, {0, 1, 0}, {0, 1, 1}, {0, 0, 1}},
@@ -452,6 +469,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     int plane5;
 
     const int lutVertexTriangles3d[27] = {36,21,21,21,9,15,21,15,9,21,9,15,15,5,12,9,5,5,21,15,9,9,5,5,15,12,5};
+    //std::array<int, 27> lutVertexTriangles3d = {12,6,8,5,5,5,8,5,5,8,5,5,5,3,3,5,3,3,8,6,6,5,3,3,5,3,3}; //option from quadrangulation to make comparisons
 
     const std::vector<std::vector<int>> lutTriangleDirection3d = {
       {447, 717, 659, 699, 691, 697, 724, 609, 669, 689, 608, 446, 659, 669, 691, 697, 689, 699, 717, 724, 446, 447, 608, 609, 447, 659, 691, 669, 697, 446, 699, 609, 608, 689, 724, 717},
@@ -515,6 +533,7 @@ class Freudenthal3D final : public ttk::AbstractTriangulation {
     std::vector<std::vector<int>> lutTriangleIndexOffset;
   
     const int lutVertexTetrahedrons3d[27] = {24,12,12,12,4,8,12,8,4,12,4,8,8,2,6,4,2,2,12,8,4,4,2,2,8,6,2};
+    //std::array<int,27> lutVertexTetrahedrons3d = {8,4,4,4,2,2,4,2,2,4,2,2,2,1,1,2,1,1,4,2,2,2,1,1,2,1,1}; //option from quadrangulation to make comparisons
 
     const std::vector<std::vector<int>> lutTetrahedronDirection3d = {
       {0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 4, 5, 0, 2, 0, 1, 1, 5, 2, 3, 3, 4, 4, 5},
