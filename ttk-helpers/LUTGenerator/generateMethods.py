@@ -1,0 +1,48 @@
+import sys;
+
+pack = sys.argv[1]
+packs = sys.argv[2]
+
+
+print("\tttk::SimplexId getVertex"+pack+"Number(const ttk::SimplexId& vertexId) const final {")
+print("\t\treturn 0;")
+print("\t};")
+print("")
+print("\tint getVertex"+pack+"(")
+print("\t\tconst SimplexId &vertexId,")
+print("\t\tconst int &local"+pack+"Id,")
+print("\t\tSimplexId &"+pack.lower()+"Id")
+print("\t) const final {")
+print("\t\treturn 1;")
+print("\t};")
+print("")
+print("\tint preconditionVertex"+packs+"() final {")
+print("\t\treturn 1;")
+print("\t};")
+
+print("\n=====\n")
+print("bool testVertex"+pack+" = true;")
+print("\n=====\n")
+
+print("if(testVertex"+packs+"){")
+print("//fetch data")
+print("std::vector<ttk::SimplexId> n"+packs+"(nVertices);")
+print("std::vector<std::vector<ttk::SimplexId>> "+packs.lower()+"(nVertices);")
+print("for(ttk::SimplexId v=0; v<nVertices; v++){")
+print("\tn"+packs+"[v] = triangulation->getVertex"+pack+"Number(v);")
+print("\t"+packs.lower()+"[v].resize(n"+packs+"[v]);")
+print("\tfor(ttk::SimplexId n=0; n<n"+packs+"[v]; n++)")
+print("\t\ttriangulation->getVertex"+pack+"(v,n,"+packs.lower()+"[v][n]);")
+print("}")
+print("")
+print("//print data")
+print("std::stringstream n"+packs+"AsString;")
+print("std::copy(n"+packs+".begin(), n"+packs+".end(), std::ostream_iterator<ttk::SimplexId>(n"+packs+"AsString, \",\"));")
+print("this->printMsg(\"n"+packs+": [\" + n"+packs+"AsString.str() + \"]\");")
+print("for(ttk::SimplexId v=0; v<nVertices; v++){")
+print("\tstd::stringstream "+packs.lower()+"AsString;")
+print("\tstd::copy("+packs.lower()+"[v].begin(), "+packs.lower()+"[v].end(), std::ostream_iterator<ttk::SimplexId>("+packs.lower()+"AsString, \",\"));")
+print("\tthis->printMsg(\""+packs.lower()+"[\"+std::to_string(v)+\"]: [\" + "+packs.lower()+"AsString.str() + \"]\");")
+print("}")
+print("//todo timing")
+print("}")
